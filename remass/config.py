@@ -46,7 +46,12 @@ def merge_dicts(a: dict, b: dict, path: str = None):
             elif a[key] == b[key]:  # Same value, keep 'a'
                 pass
             else:
-                raise ValueError("Merge conflict at %s" % '.'.join(path + [str(key)]))
+                if a[key] is None:
+                    a[key] = b[key]  # Replace None in 'a'
+                elif b[key] is None:
+                    pass  # Keep 'a' value
+                else:  # Actual value mismatch
+                    raise ValueError("Merge conflict at %s" % '.'.join(path + [str(key)]))
         else:
             a[key] = b[key]
     return a
@@ -55,10 +60,12 @@ def merge_dicts(a: dict, b: dict, path: str = None):
 class AppConfig(object):
     def __init__(self):
         # Initialize with defaults
+        self.loaded_from_disk = False
         self._cfg = {
             'connection': {
                 'host': '10.11.99.1',
                 'user': 'root',
+                'keyfile': None,
                 'password': None,
                 'timeout': 2
             }
@@ -75,6 +82,7 @@ class AppConfig(object):
             with open(ffn, 'r') as fp:
                 uc = toml.load(fp)
                 self._cfg = merge_dicts(self._cfg, uc)
+                self.loaded_from_disk = True
                 logging.getLogger(__name__).info(f"Loaded configuration from '{ffn}'")
 
     def save(self, filename: str = None):
