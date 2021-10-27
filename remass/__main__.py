@@ -16,5 +16,7 @@ if __name__ == '__main__':
 
     connection = RAConnection(cfg)
     connection.open()
+    print(connection.get_tablet_version())
+    connection.close()
 
     # RemAssTui().run()

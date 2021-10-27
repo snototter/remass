@@ -35,23 +35,19 @@ def check_permissions(filename: str = None) -> None:
                                          "the file permissions: `chmod 600 {ffn}`")
 
 
-def merge_dicts(a: dict, b: dict, path: str = None):
-    """Merges dict 'b' into dict 'a' (modifies 'a')."""
+def merge_configs(a: dict, b: dict, path: str = None):
+    """
+    Merges config dict 'b' into dict 'a'. Note that 'a' will be modified and
+    entries in 'b' override entries in 'a'.
+    """
     if path is None:
         path = []
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge_dicts(a[key], b[key], path + [str(key)])
-            elif a[key] == b[key]:  # Same value, keep 'a'
-                pass
+                merge_configs(a[key], b[key], path + [str(key)])
             else:
-                if a[key] is None:
-                    a[key] = b[key]  # Replace None in 'a'
-                elif b[key] is None:
-                    pass  # Keep 'a' value
-                else:  # Actual value mismatch
-                    raise ValueError("Merge conflict at %s" % '.'.join(path + [str(key)]))
+                a[key] = b[key]  # Replace 'a' entry by 'b' counterpart
         else:
             a[key] = b[key]
     return a
@@ -82,7 +78,7 @@ class RAConfig(object):
             check_permissions(filename)
             with open(ffn, 'r') as fp:
                 uc = toml.load(fp)
-                self._cfg = merge_dicts(self._cfg, uc)
+                self._cfg = merge_configs(self._cfg, uc)
                 self.loaded_from_disk = True
                 logging.getLogger(__name__).info(f"Loaded configuration from '{ffn}'")
 
