@@ -20,10 +20,11 @@ setuptools.setup(
     url="https://github.com/snototter/remass",
     packages=setuptools.find_packages(),
     install_requires=[
+        'wheel',
         'appdirs',
         'npyscreen',
-        'toml',
-        'wheel'
+        'paramiko',
+        'toml'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

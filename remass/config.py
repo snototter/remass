@@ -57,7 +57,7 @@ def merge_dicts(a: dict, b: dict, path: str = None):
     return a
 
 
-class AppConfig(object):
+class RAConfig(object):
     def __init__(self):
         # Initialize with defaults
         self.loaded_from_disk = False
@@ -67,7 +67,8 @@ class AppConfig(object):
                 'user': 'root',
                 'keyfile': None,
                 'password': None,
-                'timeout': 2
+                'timeout': 2,
+                'port': 22
             }
         }
         # Try to load from default config location:
