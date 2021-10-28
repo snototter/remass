@@ -19,4 +19,6 @@ if __name__ == '__main__':
     # print(connection.get_tablet_version())
     # connection.close()
 
+    #TODO change log level to warning when using the TUI!
+    #TODO argparse: config file & app dir (override default locations)
     RATui().run()
