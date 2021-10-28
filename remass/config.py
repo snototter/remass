@@ -54,9 +54,8 @@ def merge_configs(a: dict, b: dict, path: str = None):
 
 
 class RAConfig(object):
-    def __init__(self):
-        # Initialize with defaults
-        self.loaded_from_disk = False
+    def __init__(self, args=None):
+        self.loaded_from_disk = None
         self._cfg = {
             'connection': {
                 'host': '10.11.99.1',
@@ -67,8 +66,9 @@ class RAConfig(object):
                 'port': 22
             }
         }
-        # Try to load from default config location:
-        self.load()
+        # Try to load from default (or overriden) config location:
+        fname = None if args is None else args.cfg
+        self.load(fname)
 
     def load(self, filename: str = None):
         dname, fname = config_filename(filename)
@@ -79,7 +79,7 @@ class RAConfig(object):
             with open(ffn, 'r') as fp:
                 uc = toml.load(fp)
                 self._cfg = merge_configs(self._cfg, uc)
-                self.loaded_from_disk = True
+                self.loaded_from_disk = ffn
                 logging.getLogger(__name__).info(f"Loaded configuration from '{ffn}'")
 
     def save(self, filename: str = None):
