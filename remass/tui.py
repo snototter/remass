@@ -131,6 +131,7 @@ class MainForm(nps.ActionFormMinimal):
             self._tablet_fwver.value = self._connection.get_firmware_version()
             self._tablet_free_space_root.value = self._connection.get_free_space('/')
             self._tablet_free_space_home.value = self._connection.get_free_space('/home')
+            self._tablet_uptime.value = self._connection.get_uptime()
         else:
             self._info_lbl.value = '[ERROR] Not Connected!'
         super().display(clear=True)
@@ -154,6 +155,8 @@ class MainForm(nps.ActionFormMinimal):
         self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
                                                 begin_entry_at=20,
                                                 value="", editable=False)
+        self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
+                                       begin_entry_at=20, editable=False)
         #TODO add status/info bar?
 
     def exit_application(self, *args, **kwargs):

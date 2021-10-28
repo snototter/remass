@@ -3,7 +3,54 @@ import logging
 import os
 import paramiko
 import socket
+import re
 from getpass import getpass
+
+
+def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
+                     seconds: int = 0):
+    """Returns a simplified string representation of the given timedelta."""
+    s = '' if days == 0 else f'{days:d}d'
+    if hours > 0:
+        if len(s) > 0:
+            s += ' '
+        s += f'{hours:d}h'
+    if minutes > 0:
+        if len(s) > 0:
+            s += ' '
+        s += f'{minutes:d}min'
+    if seconds > 0 or len(s) == 0:
+        if len(s) > 0:
+            s += ' '
+        s += f'{seconds:d}sec'
+    return s
+
+
+def format_uptime(uptime: str):
+    """Returns a simplified string representation of the `uptime` output."""
+    match = re.search(r"up\s+(\d*.*),\s*load.*$", uptime)
+    if match is None:
+        return '-Invalid uptime-'
+    tstr = match.group(1)
+    tokens = tstr.split(',')
+    days, hours, mins, secs = 0, 0, 0, 0
+    for t in tokens:
+        if ':' in t:
+            # Should be the hours:mins token
+            subtokens = t.strip().split(':')
+            hours += int(subtokens[0])
+            mins += int(subtokens[1])
+        else:
+            # Should be either mins or days
+            subtokens = t.strip().split(' ')
+            val = int(subtokens[0])
+            if 'day' in subtokens[1]:
+                days += val
+            elif 'min' in subtokens[1]:
+                mins += val
+            elif 'sec' in subtokens[1]:
+                secs += val
+    return format_timedelta(days=days, hours=hours, minutes=mins, seconds=secs)
 
 
 class RAConnection(object):
@@ -71,6 +118,11 @@ class RAConnection(object):
     def get_free_space(self, mount_point: str = '/'):
         _, out, _ = self._client.exec_command("df -h " + mount_point + " | tail -n1 | awk '{print $4 \" / \" $2}'")
         return out.read().decode("utf-8").strip()
+    
+    def get_uptime(self):
+        _, out, _ = self._client.exec_command("uptime")
+        uptime = out.read().decode("utf-8").strip()
+        return format_uptime(uptime)
     
     def is_connected(self):
         # Returns True if the client is still connected and the session is
