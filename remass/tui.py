@@ -9,8 +9,15 @@ from .tablet import RAConnection
 from .config import RAConfig, config_filename
 
 
+#TODO list:
+# * to "cycle" the focus, we likely have to override ActionForm.edit() and set
+#   editw accordingly. Caveat: what happens if the first widget is not editable?
+# * try boxes to frame the main form's "tab buttons"
+
+
 def add_empty_row(form):
-    form.add(nps.FixedText, value="", hidden=True)
+    """Adds an empty row to the given form."""
+    form.add(nps.FixedText, value='', hidden=True)
 
 
 class StartUpForm(nps.ActionForm):
@@ -33,7 +40,8 @@ class StartUpForm(nps.ActionForm):
     def create(self):
         self._host = self.add(nps.TitleText, name="Host",
                               value=self._cfg['connection']['host'])
-        #TODO add fallback host
+        self._fallback_host = self.add(nps.TitleText, name="Fallback Host",
+                                       value=self._cfg['connection']['host_fallback'])
         self._keyfile = self.add(nps.TitleFilenameCombo,
                                  name="Private Key", label=True,
                                  value=self._cfg['connection']['keyfile'],
@@ -43,7 +51,7 @@ class StartUpForm(nps.ActionForm):
         
         add_empty_row(self)
         self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(), editable=False)
-        cfg_dname, cfg_fname = config_filename(self._cfg.loaded_from_disk)
+        cfg_dname, cfg_fname = config_filename(self._cfg.config_filename)
         cfg_path = os.path.join(cfg_dname, cfg_fname)
         self._cfg_filename = self.add(nps.TitleFilenameCombo,
                                         name="Path",
@@ -67,16 +75,16 @@ class StartUpForm(nps.ActionForm):
     
     def _get_cfg_text_label(self):
         tlbl = "Configuration file"
-        if self._cfg.loaded_from_disk is None:
+        if self._cfg.config_filename is None or not os.path.exists(self._cfg.config_filename):
             tlbl += ' (does not exist)'
         tlbl += ':'
         return tlbl
     
     def _update_config(self):
-        # Adjust configuration if needed
         self._cfg['connection']['host'] = self._host.value
         self._cfg['connection']['keyfile'] = self._keyfile.value
         self._cfg['connection']['password'] = self._password.value
+        self._cfg['connection']['host_fallback'] = self._fallback_host.value
 
     def _save_config(self):
         fname = self._cfg_filename.value
@@ -98,14 +106,7 @@ class MainForm(nps.ActionFormMinimal):
         self._cfg = cfg
         self._connection = connection
         super().__init__(*args, **kwargs)
-        # try:
-        #     self._connection.open()
-        # except paramiko.SSHException as e:
-        #     nps.notify_confirm("Aborting due to SSH exception.\n \n"
-        #                        f"Exception info: {e}",
-        #                        title='Error', form_color='CAUTION')
-        #     raise e
-    
+
     def beforeEditing(self):
         try:
             self._connection.open()

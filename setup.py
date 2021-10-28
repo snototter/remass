@@ -14,7 +14,7 @@ setuptools.setup(
     version=loaded_vars['__version__'],
     author="snototter",
     author_email="snototter@users.noreply.github.com",
-    description="TODO.",
+    description="A curses-based TUI to interact with reMarkable e-ink tablets.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/snototter/remass",
