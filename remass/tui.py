@@ -2,6 +2,9 @@ import npyscreen as nps
 import logging
 import os
 
+import paramiko
+import socket
+
 from .tablet import RAConnection
 from .config import RAConfig, config_filename
 
@@ -30,6 +33,7 @@ class StartUpForm(nps.ActionForm):
     def create(self):
         self._host = self.add(nps.TitleText, name="Host",
                               value=self._cfg['connection']['host'])
+        #TODO add fallback host
         self._keyfile = self.add(nps.TitleFilenameCombo,
                                  name="Private Key", label=True,
                                  value=self._cfg['connection']['keyfile'],
@@ -87,35 +91,70 @@ class StartUpForm(nps.ActionForm):
 
 
 
-class MainForm(nps.FormWithMenus):
+class MainForm(nps.ActionFormMinimal):
+    OK_BUTTON_TEXT = 'Exit'
+
     def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
-        #TODO connect to tablet now
         super().__init__(*args, **kwargs)
+        # try:
+        #     self._connection.open()
+        # except paramiko.SSHException as e:
+        #     nps.notify_confirm("Aborting due to SSH exception.\n \n"
+        #                        f"Exception info: {e}",
+        #                        title='Error', form_color='CAUTION')
+        #     raise e
+    
+    def beforeEditing(self):
+        try:
+            self._connection.open()
+        except paramiko.SSHException as e:
+            nps.notify_confirm("Aborting due to SSH exception.\n"
+                               f"Exception info: {e}",
+                               title='Error', form_color='CAUTION')
+            raise e
+        except socket.timeout as e:
+            nps.notify_confirm("Connection attempt timed out.\n"
+                               "Make sure the tablet is powered on and connected.",
+                               title='Error', form_color='CAUTION')
+            raise e
+        self.update_device_info()
+
+    def on_ok(self):
+        self.exit_application()
+
+    def update_device_info(self):
+        if self._connection.is_connected():
+            self._info_lbl.value = 'Connected to device:'
+            self._tablet_model.value = self._connection.get_tablet_model()
+            self._tablet_fwver.value = self._connection.get_firmware_version()
+            self._tablet_free_space_root.value = self._connection.get_free_space('/')
+            self._tablet_free_space_home.value = self._connection.get_free_space('/home')
+        else:
+            self._info_lbl.value = '[ERROR] Not Connected!'
+        super().display(clear=True)
 
     def create(self):
         self.add_handlers({
             "^X": self.exit_application,
             "^Q": self.exit_application
         })
-        self.add(nps.TitleText, name = "Text:", value= "Just some text." )
-        self.how_exited_handers[nps.wgwidget.EXITED_ESCAPE]  = self.exit_application
-
-        # The menus are created here.
-        # self.m1 = self.add_menu(name="Main Menu", shortcut="^M")
-        # self.m1.addItemsFromList([
-        #     ("Display Text", self.whenDisplayText, None, None, ("some text",)),
-        #     ("Exit Application", self.exit_application, "é"),
-        # ])
-        
-        # self.m3 = self.m2.addNewSubmenu("A sub menu", "^F")
-        # self.m3.addItemsFromList([
-        #     ("Just Beep",   self.whenJustBeep),
-        # ])        
-
-    def whenDisplayText(self, argument):
-       nps.notify_confirm(argument)
+        self._info_lbl = self.add(nps.Textfield, value="", editable=False)
+        add_empty_row(self)
+        self._tablet_model = self.add(nps.TitleFixedText, name='Model',
+                                      begin_entry_at=20,
+                                      value="", editable=False)
+        self._tablet_fwver = self.add(nps.TitleFixedText, name="Firmware",
+                                      begin_entry_at=20,
+                                      value="", editable=False)
+        self._tablet_free_space_root = self.add(nps.TitleFixedText, name="Free space /",
+                                                begin_entry_at=20,
+                                                value="", editable=False)
+        self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
+                                                begin_entry_at=20,
+                                                value="", editable=False)
+        #TODO add status/info bar?
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
@@ -137,4 +176,7 @@ class RATui(nps.NPSAppManaged):
         # Since the user may change configuration parameters within 'CONNECT',
         # the following forms should be initialized upon every invocation (to
         # inject the up-to-date parametrization)
-        self.addFormClass('MAIN', MainForm, self._cfg, self._connection, name='Main')
+        self.addFormClass('MAIN', MainForm, self._cfg, self._connection, name='reMass')
+
+    def onCleanExit(self):
+        self._connection.close()

@@ -56,14 +56,16 @@ def merge_configs(a: dict, b: dict, path: str = None):
 class RAConfig(object):
     def __init__(self, args=None):
         self.loaded_from_disk = None
+        #TODO document in README
         self._cfg = {
             'connection': {
                 'host': '10.11.99.1',
-                'user': 'root',
-                'keyfile': None,
-                'password': None,
-                'timeout': 2,
-                'port': 22
+                'host_fallback': None,  # If connection to 'host' times out, we try to connect to 'host_fallback' if set.
+                'user': 'root', # At the time of writing, there is only the root account available on the reMarkable
+                'keyfile': None,  # Path to the SSH private key
+                'password': None,  # If a keyfile is specified, pwd will be used to unlock it (otherwise, it will be used as the root's pwd)
+                'timeout': 1,  # SSH connection timeout in seconds
+                'port': 22  # If we ever need/want to adjust the connection port
             }
         }
         # Try to load from default (or overriden) config location:

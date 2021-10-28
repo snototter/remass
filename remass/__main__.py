@@ -12,7 +12,7 @@ def parse_args():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
     args = parse_args()
     # cfg = RAConfig()
     # #cfg.save()
@@ -20,10 +20,6 @@ if __name__ == '__main__':
     # print(cfg)
     # print(f'Loaded from disk? {cfg.loaded_from_disk}')
 
-    # connection = RAConnection(cfg)
-    # connection.open()
-    # print(connection.get_tablet_version())
-    # connection.close()
 
     #TODO change log level to warning when using the TUI!
     #TODO argparse: config file & app dir (override default locations)
