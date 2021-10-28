@@ -53,6 +53,11 @@ def format_uptime(uptime: str):
     return format_timedelta(days=days, hours=hours, minutes=mins, seconds=secs)
 
 
+def ssh_cmd_output(client: paramiko.SSHClient, cmd: str):
+    _, out, _ = client.exec_command(cmd)
+    return out.read().decode("utf-8").strip()
+
+
 class RAConnection(object):
     def __init__(self, config):
         self._cfg = config['connection']
@@ -89,8 +94,7 @@ class RAConnection(object):
             self._client.close()
     
     def get_tablet_model(self):
-        _, out, _ = self._client.exec_command("cat /sys/devices/soc0/machine")
-        return out.read().decode("utf-8").strip()
+        return ssh_cmd_output(self._client, "cat /sys/devices/soc0/machine")
     
     def get_firmware_version(self):
         version_map = {
@@ -111,19 +115,21 @@ class RAConnection(object):
             "20210311194323": "rM2 v2.6.1.71",
             "20210311193614": "rM1 v2.6.1.71"
         }
-        _, out, _ = self._client.exec_command("cat /etc/version")
-        vstr = out.read().decode("utf-8").strip()
+        vstr = ssh_cmd_output(self._client, "cat /etc/version")
         return version_map.get(vstr, vstr)
 
     def get_free_space(self, mount_point: str = '/'):
-        _, out, _ = self._client.exec_command("df -h " + mount_point + " | tail -n1 | awk '{print $4 \" / \" $2}'")
-        return out.read().decode("utf-8").strip()
+        return ssh_cmd_output(self._client, "df -h " + mount_point + " | tail -n1 | awk '{print $4 \" / \" $2}'")
     
     def get_uptime(self):
-        _, out, _ = self._client.exec_command("uptime")
-        uptime = out.read().decode("utf-8").strip()
-        return format_uptime(uptime)
-    
+        return format_uptime(ssh_cmd_output(self._client, 'uptime'))
+
+    def get_battery_info(self):
+        capacity = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/capacity"))
+        health = ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/health")
+        temp = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/temp"))/10
+        return (f'{capacity:d}%', health, f'{temp:.1f}°C')
+
     def is_connected(self):
         # Returns True if the client is still connected and the session is
         # still active (see comment to https://stackoverflow.com/a/33383984)

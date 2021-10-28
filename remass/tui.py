@@ -64,7 +64,7 @@ class StartUpForm(nps.ActionForm):
         # We want to focus/highlight the ok button (which is created inside
         # the base class' edit())
         self.preserve_selected_widget = True
-        self.editw = 8
+        self.editw = 9
 
     def on_cancel(self):
         self.parentApp.switchForm(None)  # Exits the application
@@ -98,6 +98,12 @@ class StartUpForm(nps.ActionForm):
         self._cfg_text.update()
 
 
+def _ralign(txt: str, width: int):
+    """Aligns the text right (for labels/text fields) by padding it with spaces."""
+    if txt is None or len(txt) >= width:
+        return txt
+    return ' '*(width - len(txt)) + txt
+
 
 class MainForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Exit'
@@ -127,12 +133,21 @@ class MainForm(nps.ActionFormMinimal):
 
     def update_device_info(self):
         if self._connection.is_connected():
+            max_text_width = 22
             self._info_lbl.value = 'Connected to device:'
-            self._tablet_model.value = self._connection.get_tablet_model()
-            self._tablet_fwver.value = self._connection.get_firmware_version()
-            self._tablet_free_space_root.value = self._connection.get_free_space('/')
-            self._tablet_free_space_home.value = self._connection.get_free_space('/home')
-            self._tablet_uptime.value = self._connection.get_uptime()
+            self._tablet_model.value = _ralign(self._connection.get_tablet_model(),
+                                               max_text_width)
+            self._tablet_fwver.value = _ralign(self._connection.get_firmware_version(),
+                                               max_text_width)
+            self._tablet_free_space_root.value = _ralign(self._connection.get_free_space('/'),
+                                                         max_text_width)
+            self._tablet_free_space_home.value = _ralign(self._connection.get_free_space('/home'),
+                                                         max_text_width)
+            self._tablet_uptime.value = _ralign(self._connection.get_uptime(),
+                                                max_text_width)
+            bcap, bhealth, btemp = self._connection.get_battery_info()
+            self._tablet_battery_info.value = _ralign(f'{bcap} ({bhealth}), {btemp}',
+                                                      max_text_width)
         else:
             self._info_lbl.value = '[ERROR] Not Connected!'
         super().display(clear=True)
@@ -156,6 +171,9 @@ class MainForm(nps.ActionFormMinimal):
         self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
                                                 begin_entry_at=20,
                                                 value="", editable=False)
+        self._tablet_battery_info = self.add(nps.TitleFixedText, name="Battery status",
+                                             value="", begin_entry_at=20,
+                                             editable=False)
         self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
                                        begin_entry_at=20, editable=False)
         #TODO add status/info bar?
