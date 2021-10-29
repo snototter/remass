@@ -30,6 +30,7 @@ def format_uptime(uptime: str):
     """Returns a simplified string representation of the `uptime` output."""
     match = re.search(r"up\s+(\d*.*),\s*load.*$", uptime)
     if match is None:
+        logging.getLogger(__name__).warning(f'Invalid uptime string "{uptime}"')
         return '-Invalid uptime-'
     tstr = match.group(1)
     tokens = tstr.split(',')
@@ -52,6 +53,18 @@ def format_uptime(uptime: str):
                 secs += val
     return format_timedelta(days=days, hours=hours, minutes=mins, seconds=secs)
 
+
+### The SSH client does not run the shell in login mode - ifconfig then only
+### returns the loopback and usb interfaces (thus, there's no use in querying
+### the device IPs)
+# def parse_addresses(output: str):
+#     matches = re.findall(r"inet addr:(\d+\.\d+\.\d+\.\d)\s+", output)
+#     if matches is None or len(matches) == 0:
+#         logging.getLogger(__name__).warning(f'Invalid ifconfig output "{output}"')
+#         return '-Invalid address-'
+#     # return [m for m in matches if m != '127.0.0.1']
+#     return matches
+    
 
 def ssh_cmd_output(client: paramiko.SSHClient, cmd: str):
     _, out, _ = client.exec_command(cmd)
@@ -129,6 +142,10 @@ class RAConnection(object):
         health = ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/health")
         temp = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/temp"))/10
         return (f'{capacity:d}%', health, f'{temp:.1f}°C')
+    
+    # def get_address(self):
+    #     s = ssh_cmd_output(self._client, "/sbin/ifconfig")
+    #     return parse_addresses(s)
 
     def is_connected(self):
         # Returns True if the client is still connected and the session is
@@ -136,7 +153,7 @@ class RAConnection(object):
         if self._client is not None:
             try:
                 transport = self._client.get_transport()
-                if transport.is_active():
+                if transport is not None and transport.is_active():
                     transport.send_ignore()
                     return True
             except EOFError:

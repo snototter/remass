@@ -15,9 +15,45 @@ from .config import RAConfig, config_filename
 # * try boxes to frame the main form's "tab buttons"
 
 
+class CustomPasswordEntry(nps.Textfield):
+    """Extension to npyscreen's PasswordEntry which allows overriding the
+    password replacement character."""
+    def __init__(self, *args, pwd_char: str='*', **kwargs):
+        self.pwd_char = pwd_char
+        super().__init__(*args, **kwargs)
+
+    def _print(self):
+        strlen = len(self.value)
+        tmp_x = self.relx
+        if self.maximum_string_length < strlen:
+            n = self.maximum_string_length
+            fx = self.parent.curses_pad.addch
+        else:
+            n = strlen
+            fx = self.parent.curses_pad.addstr
+        for i in range(n):
+            fx(self.rely, tmp_x, self.pwd_char)
+            tmp_x += 1
+
+class TitleCustomPassword(nps.TitleText):
+    _entry_type = CustomPasswordEntry
+
+
+
+
 def add_empty_row(form):
     """Adds an empty row to the given form."""
     form.add(nps.FixedText, value='', hidden=True)
+
+
+def full_class_name(o):
+    """Returns the fully qualified class name of the given object.
+    Taken from MB's answer: https://stackoverflow.com/a/13653312
+    """
+    module = o.__class__.__module__
+    if module is None or module == str.__class__.__module__:
+        return o.__class__.__name__
+    return module + '.' + o.__class__.__name__
 
 
 class StartUpForm(nps.ActionForm):
@@ -46,8 +82,8 @@ class StartUpForm(nps.ActionForm):
                                  name="Private Key", label=True,
                                  value=self._cfg['connection']['keyfile'],
                                  select_dir=False, must_exist=True)
-        self._password = self.add(nps.TitlePassword, name="Password",
-                                  value=self._cfg['connection']['password'])
+        self._password = self.add(TitleCustomPassword, name="Password",
+                                  pwd_char = '*', value=self._cfg['connection']['password'])
         
         add_empty_row(self)
         self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(), editable=False)
@@ -117,10 +153,13 @@ class MainForm(nps.ActionFormMinimal):
         try:
             self._connection.open()
         except (paramiko.SSHException, socket.timeout, socket.gaierror) as e:
-            nps.notify_confirm("Cannot connect to tablet.\n"
-                               f"Exception info: {e}",
+            nps.notify_confirm("Cannot connect to tablet - aborting now.\n"
+                               "----------------------------------------\n"
+                               f"Exception '{full_class_name(e)}' details:\n{e}",
                                title='Error', form_color='CAUTION')
-            raise e
+            # self.exit_application() will be ignored when invoked from this
+            # exception handler, thus we have to quit the ugly way:
+            raise RuntimeError(f'Aborting due to connection error: {e}') from None
         self.update_device_info()
 
     def on_ok(self):
