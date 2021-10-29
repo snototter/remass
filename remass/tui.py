@@ -116,14 +116,9 @@ class MainForm(nps.ActionFormMinimal):
     def beforeEditing(self):
         try:
             self._connection.open()
-        except paramiko.SSHException as e:
-            nps.notify_confirm("Aborting due to SSH exception.\n"
+        except (paramiko.SSHException, socket.timeout, socket.gaierror) as e:
+            nps.notify_confirm("Cannot connect to tablet.\n"
                                f"Exception info: {e}",
-                               title='Error', form_color='CAUTION')
-            raise e
-        except socket.timeout as e:
-            nps.notify_confirm("Connection attempt timed out.\n"
-                               "Make sure the tablet is powered on and connected.",
                                title='Error', form_color='CAUTION')
             raise e
         self.update_device_info()
