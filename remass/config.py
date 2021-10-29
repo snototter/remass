@@ -18,6 +18,23 @@ def config_filename(filename: str = None) -> Tuple[str, str]:
     return os.path.split(filename)
 
 
+def setup_app_dir(folder: str) -> str:
+    """Ensures that the application's data directory is set up properly.
+    If the given 'folder' is None, we use the user's default application data
+    directory.
+    :return: path to the application directory.
+    """
+    if folder is None:
+        folder = appdirs.user_data_dir(appname=APP_NAME)
+    subfolders = [
+        os.path.join(folder, 'templates'),
+        os.path.join(folder, 'screens')]
+    for sf in subfolders:
+        if not os.path.exists(sf):
+            os.makedirs(sf)
+    return folder
+
+
 def check_permissions(filename: str = None) -> None:
     """Check if the configuration file is readable by other users."""
     dname, fname = config_filename(filename)
@@ -35,7 +52,7 @@ def check_permissions(filename: str = None) -> None:
                                          "the file permissions: `chmod 600 {ffn}`")
 
 
-def merge_configs(a: dict, b: dict, path: str = None):
+def merge_configs(a: dict, b: dict, path: str = None) -> dict:
     """
     Merges config dict 'b' into dict 'a'. Note that 'a' will be modified and
     entries in 'b' override entries in 'a'.
@@ -69,9 +86,11 @@ class RAConfig(object):
         }
         # Try to load from default (or overriden) config location:
         self.config_filename = None if args is None else args.cfg
+        # Ensure we have the proper folder structure in our app's data directory
         self.load(self.config_filename)
+        self.app_dir = setup_app_dir(None if args is None else args.dir)
 
-    def load(self, filename: str = None):
+    def load(self, filename: str = None) -> None:
         dname, fname = config_filename(filename)
         ffn = os.path.join(dname, fname)
         if os.path.exists(ffn):
@@ -83,7 +102,7 @@ class RAConfig(object):
                 self.config_filename = ffn
                 logging.getLogger(__name__).info(f"Loaded configuration from '{ffn}'")
 
-    def save(self, filename: str = None):
+    def save(self, filename: str = None) -> None:
         dname, fname = config_filename(filename)
         if not os.path.exists(dname):
             logging.getLogger(__name__).info(f"Creating directory structure '{dname}'")

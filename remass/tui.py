@@ -35,13 +35,14 @@ class CustomPasswordEntry(nps.Textfield):
             fx(self.rely, tmp_x, self.pwd_char)
             tmp_x += 1
 
+
 class TitleCustomPassword(nps.TitleText):
     _entry_type = CustomPasswordEntry
 
 
 
 
-def add_empty_row(form):
+def add_empty_row(form: nps.Form) -> None:
     """Adds an empty row to the given form."""
     form.add(nps.FixedText, value='', hidden=True)
 
@@ -134,7 +135,7 @@ class StartUpForm(nps.ActionForm):
         self._cfg_text.update()
 
 
-def _ralign(txt: str, width: int):
+def _ralign(txt: str, width: int) -> str:
     """Aligns the text right (for labels/text fields) by padding it with spaces."""
     if txt is None or len(txt) >= width:
         return txt
@@ -155,7 +156,7 @@ class MainForm(nps.ActionFormMinimal):
         except (paramiko.SSHException, socket.timeout, socket.gaierror) as e:
             nps.notify_confirm("Cannot connect to tablet - aborting now.\n"
                                "----------------------------------------\n"
-                               f"Exception '{full_class_name(e)}' details:\n{e}",
+                               f"Exception ({full_class_name(e)}):\n{e}",
                                title='Error', form_color='CAUTION')
             # self.exit_application() will be ignored when invoked from this
             # exception handler, thus we have to quit the ugly way:
@@ -188,8 +189,7 @@ class MainForm(nps.ActionFormMinimal):
 
     def create(self):
         self.add_handlers({
-            "^X": self.exit_application,
-            "^Q": self.exit_application
+            "^X": self.exit_application
         })
         self._info_lbl = self.add(nps.Textfield, value="", editable=False)
         add_empty_row(self)

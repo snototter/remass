@@ -83,7 +83,6 @@ class RAConnection(object):
         pkey = self._check_key()
         password = None if pkey is not None else self._cfg['password']
         user = self._cfg['user']
-
         self._client.connect(host, username=user,
                             password=password, pkey=pkey,
                             timeout=self._cfg['timeout'],
