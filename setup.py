@@ -22,6 +22,7 @@ setuptools.setup(
     install_requires=[
         'wheel',
         'appdirs',
+        'dataclasses',
         'npyscreen',
         'paramiko',
         'toml'
