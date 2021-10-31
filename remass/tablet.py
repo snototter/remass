@@ -1,10 +1,12 @@
 """Handles connection & device queries."""
 import logging
 import os
+from typing import Dict, Tuple
 import paramiko
 import socket
 import re
 from getpass import getpass
+from .filesystem import RCollection, RDirEntry, load_remote_filesystem
 
 
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
@@ -54,7 +56,7 @@ def format_uptime(uptime: str):
     return format_timedelta(days=days, hours=hours, minutes=mins, seconds=secs)
 
 
-### The SSH client does not run the shell in login mode - ifconfig then only
+### The SSH client does not run the shell in login mode - /sbin/ifconfig then only
 ### returns the loopback and usb interfaces (thus, there's no use in querying
 ### the device IPs)
 # def parse_addresses(output: str):
@@ -64,7 +66,7 @@ def format_uptime(uptime: str):
 #         return '-Invalid address-'
 #     # return [m for m in matches if m != '127.0.0.1']
 #     return matches
-    
+
 
 def ssh_cmd_output(client: paramiko.SSHClient, cmd: str):
     _, out, _ = client.exec_command(cmd)
@@ -141,10 +143,9 @@ class RAConnection(object):
         health = ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/health")
         temp = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/temp"))/10
         return (f'{capacity:d}%', health, f'{temp:.1f}°C')
-    
-    # def get_address(self):
-    #     s = ssh_cmd_output(self._client, "/sbin/ifconfig")
-    #     return parse_addresses(s)
+
+    def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
+        return load_remote_filesystem(self._client)
 
     def is_connected(self):
         # Returns True if the client is still connected and the session is

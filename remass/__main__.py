@@ -16,4 +16,9 @@ def parse_args():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING)
     args = parse_args()
-    RATui(args).run()
+    # RATui(args).run()
+
+    cfg = RAConfig(args)
+    connection = RAConnection(cfg)
+    connection.open()
+    connection.get_filesystem()
