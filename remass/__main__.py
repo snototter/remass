@@ -22,3 +22,5 @@ if __name__ == '__main__':
     connection = RAConnection(cfg)
     connection.open()
     connection.get_filesystem()
+    # connection.render_document('65fa8e6b-3b26-4837-890a-096d35851cd9')
+    connection.render_document('da845f0b-af7f-4b59-b760-f41b30d45af4')

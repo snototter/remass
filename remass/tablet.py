@@ -6,7 +6,7 @@ import paramiko
 import socket
 import re
 from getpass import getpass
-from .filesystem import RCollection, RDirEntry, load_remote_filesystem
+from .filesystem import RCollection, RDirEntry, load_remote_filesystem, render_remote
 
 
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
@@ -146,6 +146,9 @@ class RAConnection(object):
 
     def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
         return load_remote_filesystem(self._client)
+    
+    def render_document(self, uuid: str):
+        render_remote(self._client, uuid)
 
     def is_connected(self):
         # Returns True if the client is still connected and the session is

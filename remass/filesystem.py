@@ -224,30 +224,53 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
     return root, trash, dirent_dict
 
 
-def render_remote(uuid: str):
+class RemoteFileSystemSource:
+    def __init__(self, sftp_client, doc_id):
+        self.base_dir = PurePosixPath(REMOTE_XOCHITL_DIR)
+        self.sftp_client = sftp_client
+        self.doc_id = doc_id
+
+    def format_name(self, name):
+        return str(self.base_dir / name.format(ID=self.doc_id))
+
+    def open(self, fn, mode='r', bufsize=-1):
+        # print(f'OPENING {fn}')
+        return self.sftp_client.file(self.format_name(fn), mode, bufsize)
+
+    def exists(self, fn):
+        try:
+            # print(f'EXISTS? {fn}')
+            self.sftp_client.stat(self.format_name(fn))
+            return True
+        except IOError:
+            return False
+
+
+#TODO the user will likely have to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates)
+#     - but this currently doesn't work for me... (no templates loaded when file is remote...)
+#     - the problem is strings vs bytes (sftpfile: b'GridRulerP' versus local file: 'GridRuleP' for template name...)
+      #TODO check whether we can easily change the template name type: https://github.com/rschroll/rmrl/blob/89b5cc38ef45251b96bd3d1c3618429b6b46db92/rmrl/document.py#L51
+      # or if we can adjust an sftpfile setting
+      # or :( if we have to override sftpfile
+      # or ... if we have to copy all the files over...
+#TODO rendering (especially REMOTE!) must be done in a separate thread (and use the progress callback)
+def render_remote(client: paramiko.SSHClient, uuid: str):
     #     from rmrl import render
     # # import shutil
-    # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '18cc3ec7-6e38-49ec-8de4-a28ca9530e02'))
+    sftp = client.open_sftp()
+    src = RemoteFileSystemSource(sftp, uuid)
+    render_output = render(src)
     # # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '53d9369c-7f2c-4b6d-b377-0fc5e71135cc'))
+    print('RENDER OUTPUT: ', type(render_output))
+    #render_output.seek(0)
+    from pdfrw import PdfReader, PdfWriter
+    pdf_stream = PdfReader(render_output)
+    print('DUMP INFO:', pdf_stream.Info)
+    pdf_stream.Info.Title = 'Notebook Title'
+    PdfWriter('render-test.pdf', trailer=pdf_stream).write()
+    # with open('render-test.pdf', "wb") as outfile:
+    #     shutil.copyfileobj(output, outfile)
     
-    # print('RENDER OUTPUT: ', type(render_output))
-    # #render_output.seek(0)
-    # from pdfrw import PdfReader, PdfWriter
-    # pdf_stream = PdfReader(render_output)
-    # print('DUMP INFO:', pdf_stream.Info)
-    # pdf_stream.Info.Title = 'Notebook Title'
-    # PdfWriter('render-test.pdf', trailer=pdf_stream).write()
-    # # with open('render-test.pdf', "wb") as outfile:
-    # #     shutil.copyfileobj(output, outfile)
-    pass
-#TODO we have to implement a custom (remote) source (or download everything locally)
-# source: The reMarkable document to be rendered.  This may be
-#               - A filename or pathlib.Path to a zip file containing the
-#                 document, such as is provided by the Cloud API.
-#               - A filename or pathlib.Path to a root-level file from the
-#                 document, such as might be copied off the device directly.
-#               - An object implementing the Source API.  See rmrl.sources
-#                 for examples and further documentation.
 
 if __name__ == '__main__':
     import argparse
