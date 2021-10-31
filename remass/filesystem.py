@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 import os
 import json
 import datetime
-from typing import ClassVar
+from typing import ClassVar, Dict, Tuple, Type
+from collections import deque
 
 
 @dataclass
@@ -20,19 +21,19 @@ class RDirEntry(object):
     deleted: bool = False
     metadata_modified: bool = False
     modified: bool = False
-    _parent: str = None
+    _parent_uuid: str = None
     pinned: bool = False
     synced: bool = True
+    parent: Type['RDirEntry'] = None  # This is how we can do 'forward declarations' in dataclasses
 
     @property
-    def parent(self):
-        if self._parent is None or len(self._parent) == 0:
+    def parent_uuid(self):
+        if self._parent_uuid is None or len(self._parent_uuid) == 0:
             return None
-        return self._parent
-    
+        return self._parent_uuid
+
     def __lt__(self, other):
         return self.visible_name < other.visible_name
-
 
 
 @dataclass
@@ -49,7 +50,7 @@ class RCollection(RDirEntry):
     def __post_init__(self):
         self.children = list()
 
-    def add_content(self, content: RDirEntry):
+    def add(self, content: RDirEntry):
         self.children.append(content)
 
     def sort(self):
@@ -65,14 +66,14 @@ def dirent_from_metadata(metadata_filename):
         data = json.load(mdf)
         visible_name = data['visibleName']
         version = data['version']
-        last_modified = datetime.datetime.fromtimestamp(
-                            int(data['lastModified']) / 1e3)  # .metadata is in ms!
+        # Timestamp in .metadata is in milliseconds
+        last_modified = datetime.datetime.fromtimestamp(int(data['lastModified']) / 1e3)
         deleted = data['deleted']
         pinned = data['pinned']
         synced = data['synced']
         metadata_modified = data['metadatamodified']
         modified = data['modified']
-        parent = data['parent']
+        parent_uuid = data['parent']
         deleted = data['deleted']
 
         if data['type'] == RDocument.dirent_type:
@@ -81,13 +82,13 @@ def dirent_from_metadata(metadata_filename):
                         version=version, last_modified=last_modified,
                         deleted=deleted, pinned=pinned, synced=synced,
                         metadata_modified=metadata_modified, modified=modified,
-                        _parent=parent, last_opened_page=last_opened_page)
+                        _parent_uuid=parent_uuid, last_opened_page=last_opened_page)
         elif data['type'] == RCollection.dirent_type:
             return RCollection(uuid=uuid, visible_name=visible_name,
                         version=version, last_modified=last_modified,
                         deleted=deleted, pinned=pinned, synced=synced,
                         metadata_modified=metadata_modified, modified=modified,
-                        _parent=parent)
+                        _parent_uuid=parent_uuid)
         else:
             raise NotImplementedError(f"Data type '{data['type']} not yet supported")
 
@@ -99,42 +100,53 @@ def dfs(node, indent=0):
             dfs(child, indent+4)
 
 
-def build_rm_filesystem(folder):
-    # Collect all file nodes
-    root = RCollection('root', '/', version=-1, last_modified=None)
-    dirents = dict()
-    dirents['trash'] = RCollection('trash', 'trash', version=-1, last_modified=None)
+def _load_dirents(folder):
+    """Parses the metadata files within the given folder into a list of dirents."""
+    dirents = list()
     for f in os.listdir(folder):
         if not f.endswith('.metadata'):
             continue
         dirent = dirent_from_metadata(os.path.join(folder, f))
-        dirents[dirent.uuid] = dirent
-        if dirent.parent is None:
-            root.add_content(dirent)
-    # Build the hierarchy
-    to_process = list()
-    for uuid, dirent in dirents.items():
-        if dirent.parent is not None:
-            if dirent.parent not in dirents:
-                to_process.append(dirent)
-            else:
-                dirents[dirent.parent].add_content(dirent)
-    #?????
-    while len(to_process) > 0:
-        tpidx = 0
-        while tpidx < len(to_process):
-            # TODO find closest
-            to_process[tpidx].add_content(dirent)
-            to_process.pop(tpidx)
-        for dirent in to_process:
-            dirents[dirent.parent].add_content(dirent)
-            to_process
+        dirents.append(dirent)
+    return dirents
 
-    #TODO
-    # dfs(root)
-    print('DFS for trash:')
-    dfs(dirents['trash'])
-    return root
+
+def build_rm_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
+    """Builds a filesystem representation from the given xochitl backup folder.
+    
+    :return: root, trash, and a dict{uuid: entry}
+    """
+    # Collect all file nodes
+    dirent_list = _load_dirents(folder)
+
+    # rM v5 has two base parents: None (root) or 'trash' (for deleted files)
+    dirent_dict = dict()
+    root = RCollection('root', '/', version=-1, last_modified=None)
+    dirent_dict['root'] = root
+    trash = RCollection('trash', 'trash', version=-1, last_modified=None)
+    dirent_dict['trash'] = trash
+
+    # First pass, separate (direct) children from grandchildren
+    grandchildren = list()
+    for dirent in dirent_list:
+        if dirent.parent_uuid is None:
+            root.add(dirent)
+        elif dirent.parent_uuid == 'trash':
+            trash.add(dirent)
+        else:
+            grandchildren.append(dirent)
+        dirent_dict[dirent.uuid] = dirent
+    # Second pass, now all entries are known & we just need to finish the hierarchy
+    for gc in grandchildren:
+        if gc.parent_uuid not in dirent_dict:
+            raise RuntimeError(f"Parent '{gc.parent_uuid}' of grandchild entry '{gc.uuid}' is not in dict - this should not happen (first check if filesystem specs have changed)")
+        else:
+            dirent_dict[gc.parent_uuid].add(gc)
+    # Finally, sort the base parents (this will sort all child/grandchild collections, too)
+    root.sort()
+    trash.sort()
+
+    return root, trash, dirent_dict
     
 
 # def render_test():
@@ -182,9 +194,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('backup_path', type=str, help='Path to local backup copy of xochitl files.')
     args = parser.parse_args()
-    dirtree = build_rm_filesystem(args.backup_path)
+    root, trash, _ = build_rm_filesystem(args.backup_path)
 
+    print('Root')
+    dfs(root)
     print()
-    print()
-    dirtree.sort()
-    dfs(dirtree)
+    print('Trash')
+    dfs(trash)
