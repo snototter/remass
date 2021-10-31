@@ -61,7 +61,30 @@ class RFileGrid(nps.SimpleGrid):
             self.parent.try_exit()
         else:
             self.change_dir(dirent)
-#TODO we don't have '..'
+
+    def h_move_cell_right(self, inpt):  # override
+        if self.edit_cell[1] <= len(self.values[self.edit_cell[0]]) -2:   # Only allow move to end of current line
+            self.edit_cell[1] += 1
+        elif self.edit_cell[0] <= (len(self.values) -2):  # Check if we can proceed to the next row
+            self.edit_cell[1] = 0
+            self.h_move_line_down(inpt)
+            return
+
+        if self.edit_cell[1] > self.begin_col_display_at + self.columns - 1:
+            self.h_scroll_right(inpt)
+        self.on_select(inpt)
+    
+    def h_move_cell_left(self, inpt):  # override
+        if self.edit_cell[1] > 0:
+            self.edit_cell[1] -= 1
+        elif self.edit_cell[0] > 0:  # Check if we can proceed to the previous row
+            self.edit_cell[1] = len(self.values[self.edit_cell[0]-1]) - 1
+            self.h_move_line_up(inpt)
+            return
+        
+        if self.edit_cell[1] < self.begin_col_display_at:
+            self.h_scroll_left(inpt)
+        self.on_select(inpt)
 
 class RFileSelector(nps.FormBaseNew):
     def __init__(self,
