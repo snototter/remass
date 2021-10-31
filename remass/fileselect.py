@@ -26,8 +26,6 @@ class RFileGrid(nps.SimpleGrid):
         return s + vl.visible_name
     
     def change_dir(self, select_file):
-        # self.parent.value = select_file
-        # self.parent.wCommand.value = select_file
         self.parent.selected_folder = select_file
         self.parent.update_grid()
         self.edit_cell = [0, 0]
@@ -35,7 +33,7 @@ class RFileGrid(nps.SimpleGrid):
         self.begin_col_display_at = 0
         return True
         
-    def set_grid_values_from_flat_list(self, new_values, max_cols=None, reset_cursor=True):
+    def set_grid_values(self, new_values, max_cols=None, reset_cursor=True):
         if not max_cols:
             max_cols = self.columns
         grid_values = [ [], ]
@@ -46,7 +44,9 @@ class RFileGrid(nps.SimpleGrid):
                 col_number = 0
                 grid_values.append([])
                 row_number += 1
-            grid_values[row_number].append(f)    
+            grid_values[row_number].append(f)
+            # if f == selected_file:  # if we set the edit_cell, we cannot navigate the grid anymore (too lazy to debug the nps widget)
+            #     self.edit_cell = [row_number, col_number]
             col_number += 1
         self.values = grid_values
         if reset_cursor:
@@ -104,17 +104,12 @@ class RFileSelector(nps.FormBaseNew):
     def update_grid(self,):
         if isinstance(self.selected_folder, _RBackRef) and self.selected_folder.uuid is None:
             self.selected_folder = None
-            # self.selected_folder = None if self.selected_folder.uuid is None\
-            #                        else self.rm_dirents[self.selected_folder.]
-            # raise RuntimeError(f'FOOO WE HAVE A BACKREF: {self.selected_folder}')
         if self.selected_folder is None:
             file_list = [self.rm_dirents['root'], self.rm_dirents['trash']]
         else:
             dirent = self.rm_dirents[self.selected_folder.uuid]
-            #TODO add parent link '..'
             file_list = [_RBackRef(dirent.parent_uuid, '..', dirent.version, None)] + dirent.children
-        self.wMain.set_grid_values_from_flat_list(file_list, reset_cursor=False, max_cols=3)
-        
+        self.wMain.set_grid_values(file_list, reset_cursor=False, max_cols=3)
         self.display()
 
     def adjust_widgets(self):
