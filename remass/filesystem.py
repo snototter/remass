@@ -40,7 +40,17 @@ class RDirEntry(object):
         return self._parent_uuid
 
     def __lt__(self, other):
-        return self.visible_name < other.visible_name
+        if isinstance(self, RDocument):
+            if isinstance(other, RDocument):
+                return self.visible_name < other.visible_name
+            else:
+                return False
+        else:
+            # self is a _RBackRef or RCollection
+            if isinstance(other, RDocument):
+                return True
+            else:
+                return self.visible_name < other.visible_name
 
     def __eq__(self, other):
         if other is None:
