@@ -42,11 +42,19 @@ class RDirEntry(object):
     def __lt__(self, other):
         return self.visible_name < other.visible_name
 
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return self.uuid == other.uuid
+
 
 @dataclass
 class RDocument(RDirEntry):
     last_opened_page: int = 0
     dirent_type: ClassVar[str] = 'DocumentType'
+
+    def __eq__(self, other):
+        return super().__eq__(other)
 
 
 @dataclass
@@ -59,12 +67,25 @@ class RCollection(RDirEntry):
 
     def add(self, content: RDirEntry):
         self.children.append(content)
+        content.parent = self
+        content._parent_uuid = self.uuid
 
     def sort(self):
         self.children.sort()
         for child in self.children:
             if isinstance(child, RCollection):
                 child.sort()
+    
+    def __eq__(self, other):
+        return super().__eq__(other)
+
+@dataclass
+class _RBackRef(RDirEntry):
+    """Should only be used within fileselect to enable traversal up the file hierarchy."""
+    dirent_type: ClassVar[str] = 'BackRef'
+
+    def __eq__(self, other):
+        return super().__eq__(other)
 
 
 def dirent_from_metadata(metadata_filename: str, metadata_file):
@@ -136,7 +157,7 @@ def _load_dirents_remote(sftp: paramiko.SFTPClient) -> List[RDirEntry]:
 def _filesystem_from_dirents(dirent_list: List[RDirEntry]) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     # rM v5 has two base parents: None (root) or 'trash' (for deleted files)
     dirent_dict = dict()
-    root = RCollection('root', '/', version=-1, last_modified=None)
+    root = RCollection('root', '/TODO', version=-1, last_modified=None)
     dirent_dict['root'] = root
     trash = RCollection('trash', 'trash', version=-1, last_modified=None)
     dirent_dict['trash'] = trash
@@ -161,6 +182,36 @@ def _filesystem_from_dirents(dirent_list: List[RDirEntry]) -> Tuple[RCollection,
     root.sort()
     trash.sort()
     return root, trash, dirent_dict
+
+
+def dummy_filesystem() -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
+    """Returns a dummy hierarchy used for offline development"""
+    root = RCollection('root', 'My Documents/Notebooks TODO', version=-1, last_modified=None)
+    trash = RCollection('trash', 'trash', version=-1, last_modified=None)
+    c1 = RCollection('uuid1', 'First Child', 1, None)
+    c2 = RDocument('uuid2', 'Second Child', 1, None)
+    c3 = RDocument('uuid3', 'Third Child', 1, None)
+    gc1 = RDocument('uuid1-1', 'First Grandchild', 1, None)
+    gc2 = RDocument('uuid1-2', 'Second Grandchild', 1, None)
+    gc3 = RDocument('uuid1-3', 'Third Grandchild', 1, None)
+    root.add(c1)
+    root.add(c2)
+    trash.add(c3)
+    c1.add(gc1)
+    c1.add(gc2)
+    c1.add(gc3)
+    root.sort()
+    trash.sort()
+    dirents = {'root':root, 'trash':trash}
+    dirents[c1.uuid] = c1
+    dirents[c2.uuid] = c2
+    dirents[c3.uuid] = c3
+    dirents[gc1.uuid] = gc1
+    dirents[gc2.uuid] = gc2
+    dirents[gc3.uuid] = gc3
+    return root, trash, dirents
+
+    
 
 
 def load_local_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
