@@ -13,6 +13,11 @@ from collections import deque
 import paramiko
 import stat
 from pathlib import PurePosixPath
+from rmrl import render
+
+
+REMOTE_XOCHITL_DIR = '/home/root/.local/share/remarkable/xochitl'
+
 
 @dataclass
 class RDirEntry(object):
@@ -116,14 +121,13 @@ def _load_dirents_local(folder: str) -> List[RDirEntry]:
 
 def _load_dirents_remote(sftp: paramiko.SFTPClient) -> List[RDirEntry]:
     """Parses the metadata files from the SFTP connection into a list of dirents."""
-    remote_dir = '/home/root/.local/share/remarkable/xochitl'
     dirents = list()
     # We're only interested in the .metadata files
-    metadata_nodes = [de for de in sftp.listdir_attr(remote_dir)
+    metadata_nodes = [de for de in sftp.listdir_attr(REMOTE_XOCHITL_DIR)
                       if stat.S_ISREG(de.st_mode) and de.filename.endswith('.metadata')]
     # print('METADATA NODES:', '\n'.join([n.filename for n in metadata_nodes]))
     for fnode in metadata_nodes:
-        pth = PurePosixPath(remote_dir, fnode.filename)
+        pth = PurePosixPath(REMOTE_XOCHITL_DIR, fnode.filename)
         with sftp.file(str(pth), 'r') as mfile:
             dirent = dirent_from_metadata(fnode.filename, mfile)
         dirents.append(dirent)
@@ -219,6 +223,31 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
     dfs(trash) #TODO rm output
     return root, trash, dirent_dict
 
+
+def render_remote(uuid: str):
+    #     from rmrl import render
+    # # import shutil
+    # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '18cc3ec7-6e38-49ec-8de4-a28ca9530e02'))
+    # # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '53d9369c-7f2c-4b6d-b377-0fc5e71135cc'))
+    
+    # print('RENDER OUTPUT: ', type(render_output))
+    # #render_output.seek(0)
+    # from pdfrw import PdfReader, PdfWriter
+    # pdf_stream = PdfReader(render_output)
+    # print('DUMP INFO:', pdf_stream.Info)
+    # pdf_stream.Info.Title = 'Notebook Title'
+    # PdfWriter('render-test.pdf', trailer=pdf_stream).write()
+    # # with open('render-test.pdf', "wb") as outfile:
+    # #     shutil.copyfileobj(output, outfile)
+    pass
+#TODO we have to implement a custom (remote) source (or download everything locally)
+# source: The reMarkable document to be rendered.  This may be
+#               - A filename or pathlib.Path to a zip file containing the
+#                 document, such as is provided by the Cloud API.
+#               - A filename or pathlib.Path to a root-level file from the
+#                 document, such as might be copied off the device directly.
+#               - An object implementing the Source API.  See rmrl.sources
+#                 for examples and further documentation.
 
 if __name__ == '__main__':
     import argparse
