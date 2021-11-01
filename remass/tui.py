@@ -216,7 +216,9 @@ class ExportForm(nps.ActionFormMinimal):
                                      must_exist=False, confirm_if_exists=True,
                                      begin_entry_at=24)
         add_empty_row(self)
-        self.template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24)
+        self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24)
+        self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True)
+        self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False)
         add_empty_row(self)
         self.add(nps.ButtonPress, name='Start PDF Export', relx=23+2,
                  when_pressed_function=self._start_export)
@@ -228,7 +230,10 @@ class ExportForm(nps.ActionFormMinimal):
         #TODO check if files are selected, show notification otherwise
         #TODO start thread, implement callback to adjust progress bar
         #TODO upon 100% finished, clean up & notify the user
-        self.progress_bar.value = 23
+        self._rendering_progress_callback(42.3)
+    
+    def _rendering_progress_callback(self, percentage):
+        self.progress_bar.value = percentage
         self.progress_bar.update()
 
     def exit_application(self, *args, **kwargs):
