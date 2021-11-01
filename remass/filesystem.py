@@ -11,6 +11,8 @@ import datetime
 from typing import ClassVar, Dict, List, Tuple, Type
 from collections import deque
 import paramiko
+from paramiko import file
+from paramiko.util import ClosingContextManager
 import stat
 from pathlib import PurePosixPath
 from rmrl import render
@@ -285,7 +287,46 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
     return root, trash, dirent_dict
 
 
-class RemoteFileSystemSource:
+def is_rm_textfile(filename):
+    if filename.endswith('.json'):
+        return True
+    if filename.endswith('.content'):
+        return True
+    if filename.endswith('.pagedata'):
+        return True
+    if filename.endswith('.bookm'):
+        return True
+    return False
+
+
+class RemoteFile(ClosingContextManager):
+    def __init__(self, sftp_client, filename, mode, bufsize):
+        # self.sftp_client = sftp_client
+        # self.filename = filename
+        self.decode = is_rm_textfile(filename)
+        self.sftp_file = sftp_client.file(filename, mode, bufsize)
+    
+    def close(self):
+        self.sftp_file.close()
+    
+    def flush(self):
+        self.sftp_file.flush()
+
+    def prefetch(self, file_size=None):
+        self.sftp_file.prefetch(file_size)
+    
+    def read(self, size=None):
+        buf = self.sftp_file.read(size)
+        if self.decode:
+            return buf.decode('utf-8')
+        else:
+            return buf
+        #TODO as of now, it seems we only need to expose the read() interface
+        #  readable, readinto, readline(size=None), readlines(sizehint=None), readv(chunks)
+        #TODO seekable()
+        
+
+class RemoteFileSystemSource(object):
     def __init__(self, sftp_client, doc_id):
         self.base_dir = PurePosixPath(REMOTE_XOCHITL_DIR)
         self.sftp_client = sftp_client
@@ -295,12 +336,13 @@ class RemoteFileSystemSource:
         return str(self.base_dir / name.format(ID=self.doc_id))
 
     def open(self, fn, mode='r', bufsize=-1):
-        # print(f'OPENING {fn}')
-        return self.sftp_client.file(self.format_name(fn), mode, bufsize)
+        # Paramiko SFTPFile only returns bytes but rmrl requires strings for
+        # text files. Thus, we use our RemoteFile wrapper
+        # return self.sftp_client.file(self.format_name(fn), mode, bufsize)
+        return RemoteFile(self.sftp_client, self.format_name(fn), mode, bufsize)
 
     def exists(self, fn):
         try:
-            # print(f'EXISTS? {fn}')
             self.sftp_client.stat(self.format_name(fn))
             return True
         except IOError:
