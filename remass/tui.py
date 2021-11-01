@@ -1,6 +1,7 @@
 import npyscreen as nps
-import logging
+# import logging
 import os
+import curses
 
 import paramiko
 import socket
@@ -149,14 +150,6 @@ class StartUpForm(nps.ActionForm):
         self._cfg_text.update()
 
 
-def _ralign(txt: str, width: int) -> str:
-    """Aligns the text right (for labels/text fields) by padding it with spaces."""
-    if txt is None or len(txt) >= width:
-        return txt
-    return ' '*(width - len(txt)) + txt
-
-
-
 
 
 
@@ -175,7 +168,7 @@ class AlphaSlider(nps.Slider):
 class TitleAlphaSlider(nps.TitleText):
     _entry_type = AlphaSlider
     def __init__(self, screen, *args, **kwargs):
-        super().__init__(screen, lowest=0, step=1, out_of=10, label=True, *args, **kwargs)
+        super().__init__(screen, lowest=0, step=1, out_of=10, label=True, color='STANDOUT', *args, **kwargs)
 
     @property
     def alpha(self):
@@ -206,14 +199,17 @@ class ExportForm(nps.ActionFormMinimal):
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
+        self._to_main()
+    
+    def _to_main(self, *args, **kwargs):
         self.parentApp.setNextForm('MAIN')
         self.editing = False
         self.parentApp.switchFormNow()
 
     def create(self):
         self.add_handlers({
-            "^X": self.exit_application,  # exit
-            "^B": self.on_ok,  # go back
+            "^X": self.exit_application,
+            "^B": self._to_main,
             "^S": self._start_export
         })
         self.select_tablet = self.add(TitleRFilenameCombo, name="reMarkable Notebook", label=True,
@@ -291,19 +287,13 @@ class MainForm(nps.ActionFormMinimal):
         if self._connection.is_connected():
             max_text_width = 22
             self._info_lbl.value = 'Connected to device:'
-            self._tablet_model.value = _ralign(self._connection.get_tablet_model(),
-                                               max_text_width)
-            self._tablet_fwver.value = _ralign(self._connection.get_firmware_version(),
-                                               max_text_width)
-            self._tablet_free_space_root.value = _ralign(self._connection.get_free_space('/'),
-                                                         max_text_width)
-            self._tablet_free_space_home.value = _ralign(self._connection.get_free_space('/home'),
-                                                         max_text_width)
-            self._tablet_uptime.value = _ralign(self._connection.get_uptime(),
-                                                max_text_width)
+            self._tablet_model.value = self._connection.get_tablet_model().rjust(max_text_width)
+            self._tablet_fwver.value = self._connection.get_firmware_version().rjust(max_text_width)
+            self._tablet_free_space_root.value = self._connection.get_free_space('/').rjust(max_text_width)
+            self._tablet_free_space_home.value = self._connection.get_free_space('/home').rjust(max_text_width)
+            self._tablet_uptime.value = self._connection.get_uptime().rjust(max_text_width)
             bcap, bhealth, btemp = self._connection.get_battery_info()
-            self._tablet_battery_info.value = _ralign(f'{bcap} ({bhealth}), {btemp}',
-                                                      max_text_width)
+            self._tablet_battery_info.value = f'{bcap} ({bhealth}), {btemp}'.rjust(max_text_width)
         else:
             self._info_lbl.value = '[ERROR] Not Connected!'
         super().display(clear=True)
