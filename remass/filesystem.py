@@ -101,7 +101,10 @@ class _RLink(RDirEntry):
 
 
 def dirent_from_metadata(metadata_filename: str, metadata_file):
-    #TODO doc & type file handle, filename without path
+    """Returns a RDirEntry (RDocument or RCollection) from the given metadata.
+    :metadata_filename: filename (without path/parent dir) as this will be
+                        used to extract the UUID
+    :metadata_file: file handle"""
     uuid = os.path.splitext(metadata_filename)[0]
     data = json.load(metadata_file)
     visible_name = data['visibleName']
@@ -133,7 +136,7 @@ def dirent_from_metadata(metadata_filename: str, metadata_file):
         raise NotImplementedError(f"Data type '{data['type']} not yet supported")
 
 
-def dfs(node, indent=0):
+def dfs(node, indent=0):#TODO remove
     print(f"{' '*indent}{node.visible_name} {'DIR' if isinstance(node, RCollection) else ''} {node.uuid}")
     if node.dirent_type == RCollection.dirent_type:
         for child in node.children:
@@ -169,9 +172,9 @@ def _load_dirents_remote(sftp: paramiko.SFTPClient) -> List[RDirEntry]:
 def _filesystem_from_dirents(dirent_list: List[RDirEntry]) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     # rM v5 has two base parents: None (root) or 'trash' (for deleted files)
     dirent_dict = dict()
-    root = RCollection('root', '/TODO', version=-1, last_modified=None)
+    root = RCollection('root', 'My Files', version=-1, last_modified=None)
     dirent_dict['root'] = root
-    trash = RCollection('trash', 'trash', version=-1, last_modified=None)
+    trash = RCollection('trash', 'Trash', version=-1, last_modified=None)
     dirent_dict['trash'] = trash
 
     # First pass, separate (direct) children from grandchildren
@@ -198,14 +201,14 @@ def _filesystem_from_dirents(dirent_list: List[RDirEntry]) -> Tuple[RCollection,
 
 def dummy_filesystem() -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     """Returns a dummy hierarchy used for offline development"""
-    root = RCollection('root', 'My Documents/Notebooks TODO', version=-1, last_modified=None)
-    trash = RCollection('trash', 'trash', version=-1, last_modified=None)
-    c1 = RCollection('uuid1', 'First Child', 1, None)
-    c2 = RDocument('uuid2', 'Second Child', 1, None)
-    c3 = RDocument('uuid3', 'Third Child', 1, None)
-    gc1 = RDocument('uuid1-1', 'First Grandchild', 1, None)
-    gc2 = RDocument('uuid1-2', 'Second Grandchild', 1, None)
-    gc3 = RDocument('uuid1-3', 'Third Grandchild', 1, None)
+    root = RCollection('root', 'My Files', version=-1, last_modified=None)
+    trash = RCollection('trash', 'Trash', version=-1, last_modified=None)
+    c1 = RCollection('uuid1', 'Collection 1', 1, None)
+    c2 = RDocument('uuid2', 'Document 2', 1, None)
+    c3 = RDocument('uuid3', 'Document 3', 1, None)
+    gc1 = RDocument('uuid1-1', 'Document 1-1', 1, None)
+    gc2 = RDocument('uuid1-2', 'Document 1-2', 1, None)
+    gc3 = RDocument('uuid1-3', 'Document 1-3', 1, None)
     root.add(c1)
     root.add(c2)
     trash.add(c3)
@@ -222,8 +225,6 @@ def dummy_filesystem() -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     dirents[gc2.uuid] = gc2
     dirents[gc3.uuid] = gc3
     return root, trash, dirents
-
-    
 
 
 def load_local_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
@@ -252,25 +253,6 @@ def load_local_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[s
 #     #     shutil.copyfileobj(output, outfile)
 
 
-# def list_types(folder):
-#     counter = dict()
-#     for f in os.listdir(folder):
-#         if not f.endswith('.metadata'):
-#             continue
-#         with open(os.path.join(folder, f), 'r') as mdf:
-#             metadata = json.load(mdf)
-#             type_ = metadata['type']
-#             if os.path.basename(f).startswith('e7fe9444-9e3a-4bfb-9e3d-3713d7a05d45'):
-#                 print('BINGO', metadata)
-#             # print(type_, metadata['visibleName'])
-#             if type_ in counter:
-#                 counter[type_] += 1
-#             else:
-#                 counter[type_] = 0
-#             # print(metadata)
-#     print(counter)
-
-
 def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     """Loads the rM filesystem from the given remote connection.
     
@@ -279,11 +261,6 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
     sftp = client.open_sftp()
     dirent_list = _load_dirents_remote(sftp)
     root, trash, dirent_dict = _filesystem_from_dirents(dirent_list)
-    print('Root')
-    dfs(root)
-    print()
-    print('Trash')
-    dfs(trash) #TODO rm output
     return root, trash, dirent_dict
 
 
@@ -301,30 +278,32 @@ def is_rm_textfile(filename):
 
 class RemoteFile(ClosingContextManager):
     def __init__(self, sftp_client, filename, mode, bufsize):
-        # self.sftp_client = sftp_client
-        # self.filename = filename
+        # We decode the byte streams only if the remote file is a known
+        # (text-based) metadata/config/settings file
         self.decode = is_rm_textfile(filename)
         self.sftp_file = sftp_client.file(filename, mode, bufsize)
-    
+
     def close(self):
         self.sftp_file.close()
-    
+
     def flush(self):
         self.sftp_file.flush()
 
     def prefetch(self, file_size=None):
         self.sftp_file.prefetch(file_size)
-    
+
     def read(self, size=None):
+        # As of v1.0, we only needed to expose the read() interface to enable
+        # rendering the notebooks remotely (with correct template backgrounds).
+        # For the future, we might want to also override: 
+        # readable(), readinto(), readline(size=None), readlines(sizehint=None),
+        # readv(chunks) and seekable()
         buf = self.sftp_file.read(size)
         if self.decode:
             return buf.decode('utf-8')
         else:
             return buf
-        #TODO as of now, it seems we only need to expose the read() interface
-        #  readable, readinto, readline(size=None), readlines(sizehint=None), readv(chunks)
-        #TODO seekable()
-        
+
 
 class RemoteFileSystemSource(object):
     def __init__(self, sftp_client, doc_id):

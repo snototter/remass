@@ -147,7 +147,7 @@ class RAConnection(object):
     def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
         return load_remote_filesystem(self._client)
     
-    def render_document(self, uuid: str):
+    def render_document(self, uuid: str): #TODO return at least flag? output_filename, etc.
         render_remote(self._client, uuid)
 
     def is_connected(self):

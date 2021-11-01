@@ -7,6 +7,7 @@ import socket
 
 from .tablet import RAConnection
 from .config import RAConfig, config_filename
+from .fileselect import TitleRFilenameCombo
 
 
 #TODO list:
@@ -57,6 +58,7 @@ def full_class_name(o):
     return module + '.' + o.__class__.__name__
 
 
+#TODO nice-to-have: 2 boxes (connection & configuration)
 class StartUpForm(nps.ActionForm):
     # BLANK_COLUMNS_RIGHT= 2
     # BLANK_LINES_BASE = 2
@@ -75,6 +77,9 @@ class StartUpForm(nps.ActionForm):
         self.edit()
 
     def create(self):
+        self.add_handlers({
+            "^X": self.exit_application  # exit
+        })
         self._host = self.add(nps.TitleText, name="Host",
                               value=self._cfg['connection']['host'])
         self._fallback_host = self.add(nps.TitleText, name="Fallback Host",
@@ -91,11 +96,11 @@ class StartUpForm(nps.ActionForm):
         cfg_dname, cfg_fname = config_filename(self._cfg.config_filename)
         cfg_path = os.path.join(cfg_dname, cfg_fname)
         self._cfg_filename = self.add(nps.TitleFilenameCombo,
-                                        name="Path",
-                                        value=cfg_path, select_dir=False,
-                                        label=True, must_exist=False,
-                                        confirm_if_exists=True)
-        self.add(nps.ButtonPress, name='Save Configuration File',
+                                      name="Path",
+                                      value=cfg_path, select_dir=False,
+                                      label=True, must_exist=False,
+                                      confirm_if_exists=True)
+        self.add(nps.ButtonPress, name='Save Configuration File', relx=17,
                  when_pressed_function=self._save_config)
 
         # We want to focus/highlight the ok button (which is created inside
@@ -104,7 +109,14 @@ class StartUpForm(nps.ActionForm):
         self.editw = 9
 
     def on_cancel(self):
+        self.exit_application()
+    
+    def exit_application(self, *args, **kwargs):
         self.parentApp.switchForm(None)  # Exits the application
+        # self.parentApp.setNextForm(None)
+        # self.editing = False
+        # self.parentApp.switchFormNow()
+
 
     def on_ok(self):
         self._update_config()
@@ -140,6 +152,89 @@ def _ralign(txt: str, width: int) -> str:
     if txt is None or len(txt) >= width:
         return txt
     return ' '*(width - len(txt)) + txt
+
+
+
+
+
+
+class AlphaSlider(nps.Slider):
+    """Slider widget to select a transparency/alpha value in [0,1] with increments of 0.1"""
+    def translate_value(self):
+        assert self.step == 1
+        assert self.out_of == 10
+        alpha = self.value / self.out_of
+        return f'{alpha:.1f}'.rjust(8)
+
+
+class TitleAlphaSlider(nps.TitleText):
+    _entry_type = AlphaSlider
+    def __init__(self, screen, *args, **kwargs):
+        super().__init__(screen, lowest=0, step=1, out_of=10, label=True, *args, **kwargs)
+
+
+
+
+class ProgressBar(nps.Slider):
+    def __init__(self, *args, **keywords):
+        super().__init__(*args, **keywords)
+        self.editable = False
+
+    def translate_value(self):
+        assert self.out_of == 100
+        percent = int(self.value)
+        return f'{percent:d} %'.rjust(8)
+
+class ProgressBarBox(nps.BoxTitle):   
+    _contained_widget = ProgressBar
+
+
+class ExportForm(nps.ActionFormMinimal):
+    OK_BUTTON_TEXT = 'Back'
+    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+        self._cfg = cfg
+        self._connection = connection
+        self.fs_root, self.fs_trash, self.fs_dirents = self._connection.get_filesystem()
+        super().__init__(*args, **kwargs)
+
+    def on_ok(self):
+        self.parentApp.setNextForm('MAIN')
+        self.editing = False
+        self.parentApp.switchFormNow()
+
+    def create(self):
+        self.add_handlers({
+            "^X": self.exit_application,  # exit
+            "^B": self.on_ok,  # go back
+            "^S": self._start_export
+        })
+        self.select_tablet = self.add(TitleRFilenameCombo, name="reMarkable Notebook", label=True,
+                                      rm_dirents=self.fs_dirents, select_dir=False,
+                                      begin_entry_at=24)
+        self.select_local = self.add(nps.TitleFilenameCombo, name="Output PDF",
+                                     value=None, select_dir=False, label=True,
+                                     must_exist=False, confirm_if_exists=True,
+                                     begin_entry_at=24)
+        add_empty_row(self)
+        self.template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24)
+        add_empty_row(self)
+        self.add(nps.ButtonPress, name='Start PDF Export', relx=23+2,
+                 when_pressed_function=self._start_export)
+        add_empty_row(self)
+        add_empty_row(self)
+        self.progress_bar = self.add(ProgressBarBox, name='Export Progress', value=0, max_height=3, out_of=100)
+
+    def _start_export(self, *args, **kwargs):
+        #TODO check if files are selected, show notification otherwise
+        #TODO start thread, implement callback to adjust progress bar
+        #TODO upon 100% finished, clean up & notify the user
+        self.progress_bar.value = 23
+        self.progress_bar.update()
+
+    def exit_application(self, *args, **kwargs):
+        self.parentApp.setNextForm(None)
+        self.editing = False
+        self.parentApp.switchFormNow()
 
 
 class MainForm(nps.ActionFormMinimal):
@@ -189,7 +284,10 @@ class MainForm(nps.ActionFormMinimal):
 
     def create(self):
         self.add_handlers({
-            "^X": self.exit_application
+            "^X": self.exit_application,
+            "^E": self._switch_form_export,
+            "^T": self._switch_form_templates,
+            "^S": self._switch_form_screens
         })
         self._info_lbl = self.add(nps.Textfield, value="", editable=False)
         add_empty_row(self)
@@ -210,10 +308,35 @@ class MainForm(nps.ActionFormMinimal):
                                              editable=False)
         self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
                                        begin_entry_at=20, editable=False)
-        #TODO add status/info bar?
+        add_empty_row(self)
+        add_empty_row(self)
+        add_empty_row(self)
+        self.add(nps.ButtonPress, name='Export PDF', relx=8,
+                 when_pressed_function=self._switch_form_export)
+        add_empty_row(self)   
+        self.add(nps.ButtonPress, name='Manage Templates', relx=8,
+                 when_pressed_function=self._switch_form_templates)
+        add_empty_row(self)
+        self.add(nps.ButtonPress, name='Change Screens', relx=8,
+                 when_pressed_function=self._switch_form_screens)
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
+        self.editing = False
+        self.parentApp.switchFormNow()
+    
+    def _switch_form_templates(self, *args, **kwargs):
+        self.parentApp.setNextForm('TEMPLATES')  # TODO
+        self.editing = False
+        self.parentApp.switchFormNow()
+
+    def _switch_form_screens(self, *args, **kwargs):
+        self.parentApp.setNextForm('SCREENS')  # TODO
+        self.editing = False
+        self.parentApp.switchFormNow()
+
+    def _switch_form_export(self, *args, **kwargs):
+        self.parentApp.setNextForm('EXPORT')
         self.editing = False
         self.parentApp.switchFormNow()
 
@@ -233,6 +356,7 @@ class RATui(nps.NPSAppManaged):
         # the following forms should be initialized upon every invocation (to
         # inject the up-to-date parametrization)
         self.addFormClass('MAIN', MainForm, self._cfg, self._connection, name='reMass')
+        self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection, name='reMass: Export PDF')
 
     def onCleanExit(self):
         self._connection.close()
