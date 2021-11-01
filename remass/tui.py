@@ -245,9 +245,9 @@ class ExportForm(nps.ActionFormMinimal):
             nps.notify_confirm("You must select an output file!",
                                title='Error', form_color='CAUTION')
             return False
-        raise RuntimeError(f'Need to render: {self.select_tablet.value.hierarchy_name} --> '
-                           f'{self.select_local.value}, alpha {self.rendering_template_alpha.alpha},'
-                           f' expand {self.rendering_expand_pages.value}, annotated-only {self.rendering_only_annotated.value}')
+        # raise RuntimeError(f'Need to render: {self.select_tablet.value.hierarchy_name} --> '
+        #                    f'{self.select_local.value}, alpha {self.rendering_template_alpha.alpha},'
+        #                    f' expand {self.rendering_expand_pages.value}, annotated-only {self.rendering_only_annotated.value}')
         #TODO start thread, implement callback to adjust progress bar
         #TODO upon 100% finished, clean up & notify the user
         self._rendering_progress_callback(42.3)
