@@ -3,7 +3,7 @@ from typing import List
 import npyscreen as nps
 import os
 import curses
-from .filesystem import RCollection, RDirEntry, RDocument, _RBackRef, dummy_filesystem
+from .filesystem import RCollection, RDirEntry, RDocument, _RLink
 
 
 class RFileGrid(nps.SimpleGrid):
@@ -125,13 +125,13 @@ class RFileSelector(nps.FormBaseNew):
         self.adjust_widgets()
 
     def update_grid(self,):
-        if isinstance(self.selected_folder, _RBackRef) and self.selected_folder.uuid is None:
+        if isinstance(self.selected_folder, _RLink) and self.selected_folder.uuid is None:
             self.selected_folder = None
         if self.selected_folder is None:
             file_list = [self.rm_dirents['root'], self.rm_dirents['trash']]
         else:
             dirent = self.rm_dirents[self.selected_folder.uuid]
-            file_list = [_RBackRef(dirent.parent_uuid, '..', dirent.version, None)] + dirent.children
+            file_list = [_RLink(dirent.parent_uuid, '..', dirent.version, None)] + dirent.children
         self.wMain.set_grid_values(file_list, reset_cursor=False, max_cols=3)
         self.display()
 

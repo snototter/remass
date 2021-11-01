@@ -48,7 +48,7 @@ class RDirEntry(object):
             else:
                 return False
         else:
-            # self is a _RBackRef or RCollection
+            # self is a _RLink or RCollection
             if isinstance(other, RDocument):
                 return True
             else:
@@ -92,9 +92,9 @@ class RCollection(RDirEntry):
         return super().__eq__(other)
 
 @dataclass
-class _RBackRef(RDirEntry):
+class _RLink(RDirEntry):
     """Should only be used within fileselect to enable traversal up the file hierarchy."""
-    dirent_type: ClassVar[str] = 'BackRef'
+    dirent_type: ClassVar[str] = 'Link'
 
     def __eq__(self, other):
         return super().__eq__(other)
