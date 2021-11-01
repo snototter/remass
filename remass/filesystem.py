@@ -36,7 +36,7 @@ class RDirEntry(object):
     parent: Type['RDirEntry'] = None  # This is how we can do 'forward declarations' in dataclasses
 
     @property
-    def parent_uuid(self):
+    def parent_uuid(self) -> str:
         if self._parent_uuid is None or len(self._parent_uuid) == 0:
             return None
         return self._parent_uuid
@@ -58,6 +58,13 @@ class RDirEntry(object):
         if other is None:
             return False
         return self.uuid == other.uuid
+
+    @property
+    def hierarchy_name(self) -> str:
+        if self.parent is None:
+            return self.visible_name
+        else:
+            return self.parent.hierarchy_name + '/' + self.visible_name
 
 
 @dataclass

@@ -145,14 +145,6 @@ def selectRFile(rm_dirents, starting_value=None, select_dir=False, *args, **keyw
     F.edit()    
     return F.selected_folder if select_dir else F.selected_file
 
-
-def file_hierarchy_name(node: RDirEntry) -> str:
-    if node.parent is None:
-        return node.visible_name
-    else:
-        return file_hierarchy_name(node.parent) + '/' + node.visible_name
-
-
 class RFilenameCombo(nps.ComboBox):
     """You can EITHER select a notebook/document OR a folder, depending on how
     you set select_dir"""
@@ -164,7 +156,7 @@ class RFilenameCombo(nps.ComboBox):
     def _print(self):
         if isinstance(self.value, RDirEntry):
             # printme = self.value.visible_name
-            printme = file_hierarchy_name(self.value)
+            printme = self.value.hierarchy_name
         else:
             self.value = None
             printme = '- Unset -'

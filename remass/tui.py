@@ -5,6 +5,8 @@ import os
 import paramiko
 import socket
 
+from remass.filesystem import RDocument
+
 from .tablet import RAConnection
 from .config import RAConfig, config_filename
 from .fileselect import TitleRFilenameCombo
@@ -163,8 +165,11 @@ class AlphaSlider(nps.Slider):
     def translate_value(self):
         assert self.step == 1
         assert self.out_of == 10
-        alpha = self.value / self.out_of
-        return f'{alpha:.1f}'.rjust(8)
+        return f'{self.alpha:.1f}'.rjust(8)
+
+    @property
+    def alpha(self):
+        return self.value / self.out_of
 
 
 class TitleAlphaSlider(nps.TitleText):
@@ -172,6 +177,9 @@ class TitleAlphaSlider(nps.TitleText):
     def __init__(self, screen, *args, **kwargs):
         super().__init__(screen, lowest=0, step=1, out_of=10, label=True, *args, **kwargs)
 
+    @property
+    def alpha(self):
+        return self.entry_widget.alpha
 
 
 
@@ -212,9 +220,9 @@ class ExportForm(nps.ActionFormMinimal):
                                       rm_dirents=self.fs_dirents, select_dir=False,
                                       begin_entry_at=24)
         self.select_local = self.add(nps.TitleFilenameCombo, name="Output PDF",
-                                     value=None, select_dir=False, label=True,
-                                     must_exist=False, confirm_if_exists=True,
-                                     begin_entry_at=24)
+                                     value='exported-notebook.pdf', select_dir=False,
+                                     label=True, must_exist=False,
+                                     confirm_if_exists=True, begin_entry_at=24)
         add_empty_row(self)
         self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24)
         self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True)
@@ -227,10 +235,23 @@ class ExportForm(nps.ActionFormMinimal):
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', value=0, max_height=3, out_of=100)
 
     def _start_export(self, *args, **kwargs):
-        #TODO check if files are selected, show notification otherwise
+        # Check if the user selected input and destination
+        if self.select_tablet.value is None or\
+           self.select_tablet.value.dirent_type != RDocument.dirent_type:
+            nps.notify_confirm("You must select a notebook to export!",
+                               title='Error', form_color='CAUTION')
+            return False
+        if self.select_local.value is None:
+            nps.notify_confirm("You must select an output file!",
+                               title='Error', form_color='CAUTION')
+            return False
+        raise RuntimeError(f'Need to render: {self.select_tablet.value.hierarchy_name} --> '
+                           f'{self.select_local.value}, alpha {self.rendering_template_alpha.alpha},'
+                           f' expand {self.rendering_expand_pages.value}, annotated-only {self.rendering_only_annotated.value}')
         #TODO start thread, implement callback to adjust progress bar
         #TODO upon 100% finished, clean up & notify the user
         self._rendering_progress_callback(42.3)
+        return True
     
     def _rendering_progress_callback(self, percentage):
         self.progress_bar.value = percentage
