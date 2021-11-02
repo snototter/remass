@@ -18,7 +18,27 @@ from .fileselect import TitleRFilenameCombo
 #   editw accordingly. Caveat: what happens if the first widget is not editable?
 # * try boxes to frame the main form's "tab buttons"
 
+###############################################################################
+# TUI Utilities
+###############################################################################
+def add_empty_row(form: nps.Form) -> None:
+    """Adds an empty row to the given form."""
+    form.add(nps.FixedText, value='', hidden=True)
 
+
+def full_class_name(o):
+    """Returns the fully qualified class name of the given object.
+    Taken from MB's answer: https://stackoverflow.com/a/13653312
+    """
+    module = o.__class__.__module__
+    if module is None or module == str.__class__.__module__:
+        return o.__class__.__name__
+    return module + '.' + o.__class__.__name__
+
+
+###############################################################################
+# Connection/Configuration
+###############################################################################
 class CustomPasswordEntry(nps.Textfield):
     """Extension to npyscreen's PasswordEntry which allows overriding the
     password replacement character."""
@@ -44,31 +64,8 @@ class TitleCustomPassword(nps.TitleText):
     _entry_type = CustomPasswordEntry
 
 
-
-
-def add_empty_row(form: nps.Form) -> None:
-    """Adds an empty row to the given form."""
-    form.add(nps.FixedText, value='', hidden=True)
-
-
-def full_class_name(o):
-    """Returns the fully qualified class name of the given object.
-    Taken from MB's answer: https://stackoverflow.com/a/13653312
-    """
-    module = o.__class__.__module__
-    if module is None or module == str.__class__.__module__:
-        return o.__class__.__name__
-    return module + '.' + o.__class__.__name__
-
-
-#TODO nice-to-have: 2 boxes (connection & configuration)
 class StartUpForm(nps.ActionForm):
-    # BLANK_COLUMNS_RIGHT= 2
-    # BLANK_LINES_BASE = 2
     OK_BUTTON_TEXT = 'Connect'
-    # OK_BUTTON_BR_OFFSET = (2,6)
-    # OKBUTTON_TYPE = button.MiniButton
-    # DEFAULT_X_OFFSET = 2
     CANCEL_BUTTON_BR_OFFSET = (2, 20)
     CANCEL_BUTTON_TEXT = "Cancel"
 
@@ -81,57 +78,54 @@ class StartUpForm(nps.ActionForm):
 
     def create(self):
         self.add_handlers({
-            "^X": self.exit_application  # exit
+            "^X": self.exit_application
         })
-        self._host = self.add(nps.TitleText, name="Host",
+        self.add(nps.Textfield, value="Options:", editable=False, color='STANDOUT')
+        self._host = self.add(nps.TitleText, name="Host", relx=4,
                               value=self._cfg['connection']['host'])
-        self._fallback_host = self.add(nps.TitleText, name="Fallback Host",
+        self._fallback_host = self.add(nps.TitleText, name="Fallback Host", relx=4,
                                        value=self._cfg['connection']['host_fallback'])
-        self._keyfile = self.add(nps.TitleFilenameCombo,
+        self._keyfile = self.add(nps.TitleFilenameCombo, relx=4,
                                  name="Private Key", label=True,
                                  value=self._cfg['connection']['keyfile'],
                                  select_dir=False, must_exist=True)
-        self._password = self.add(TitleCustomPassword, name="Password",
+        self._password = self.add(TitleCustomPassword, name="Password", relx=4,
                                   pwd_char = '*', value=self._cfg['connection']['password'])
-        
         add_empty_row(self)
-        self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(), editable=False)
+        self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(),
+                                  editable=False, color='STANDOUT')
         cfg_dname, cfg_fname = config_filename(self._cfg.config_filename)
         cfg_path = os.path.join(cfg_dname, cfg_fname)
         self._cfg_filename = self.add(nps.TitleFilenameCombo,
-                                      name="Path",
+                                      name="Path", relx=4,
                                       value=cfg_path, select_dir=False,
                                       label=True, must_exist=False,
                                       confirm_if_exists=True)
-        self.add(nps.ButtonPress, name='Save Configuration File', relx=17,
+        self.add(nps.ButtonPress, name='[Save Configuration File]', relx=3,
                  when_pressed_function=self._save_config)
 
         # We want to focus/highlight the ok button (which is created inside
-        # the base class' edit())
+        # the base class' edit()). This can be done by:
         self.preserve_selected_widget = True
-        self.editw = 9
+        self.editw = 10
 
     def on_cancel(self):
         self.exit_application()
-    
+
     def exit_application(self, *args, **kwargs):
         self.parentApp.switchForm(None)  # Exits the application
-        # self.parentApp.setNextForm(None)
-        # self.editing = False
-        # self.parentApp.switchFormNow()
-
 
     def on_ok(self):
         self._update_config()
         self.parentApp.setNextForm('MAIN')
-    
+
     def _get_cfg_text_label(self):
         tlbl = "Configuration file"
         if self._cfg.config_filename is None or not os.path.exists(self._cfg.config_filename):
             tlbl += ' (does not exist)'
         tlbl += ':'
         return tlbl
-    
+
     def _update_config(self):
         self._cfg['connection']['host'] = self._host.value
         self._cfg['connection']['keyfile'] = self._keyfile.value
@@ -158,6 +152,9 @@ class StartUpForm(nps.ActionForm):
                                title='Error', form_color='CAUTION', editw=1)
 
 
+###############################################################################
+# PDF Export
+###############################################################################
 class AlphaSlider(nps.Slider):
     """Slider widget to select a transparency/alpha value in [0,1] with increments of 0.1"""
     def translate_value(self):
@@ -180,7 +177,6 @@ class TitleAlphaSlider(nps.TitleText):
         return self.entry_widget.alpha
 
 
-
 class ProgressBar(nps.Slider):
     def __init__(self, *args, **keywords):
         super().__init__(*args, **keywords)
@@ -190,6 +186,7 @@ class ProgressBar(nps.Slider):
         assert self.out_of == 100
         percent = int(self.value)
         return f'{percent:d} %'.rjust(8)
+
 
 class ProgressBarBox(nps.BoxTitle):   
     _contained_widget = ProgressBar
@@ -217,23 +214,31 @@ class ExportForm(nps.ActionFormMinimal):
             "^B": self._to_main,
             "^S": self._start_export
         })
+        self.add(nps.Textfield, value="Files:", editable=False, color='STANDOUT')
         self.select_tablet = self.add(TitleRFilenameCombo, name="reMarkable Notebook", label=True,
-                                      rm_dirents=self.fs_dirents, select_dir=False,
+                                      rm_dirents=self.fs_dirents, select_dir=False, relx=4,
                                       begin_entry_at=24)
         self.select_local = self.add(nps.TitleFilenameCombo, name="Output PDF",
                                      value='exported-notebook.pdf', select_dir=False,
-                                     label=True, must_exist=False,
+                                     label=True, must_exist=False, relx=4,
                                      confirm_if_exists=True, begin_entry_at=24)
         add_empty_row(self)
-        self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24)
-        self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True)
-        self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False)
+        self.add(nps.Textfield, value="Rendering Options:", editable=False, color='STANDOUT')
+        self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24, relx=4)
+        self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True, relx=4)
+        self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
         add_empty_row(self)
-        self.add(nps.ButtonPress, name='Start PDF Export', relx=23+2,
+        add_empty_row(self)
+        self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
                  when_pressed_function=self._start_export)
         add_empty_row(self)
         add_empty_row(self)
-        self.progress_bar = self.add(ProgressBarBox, name='Export Progress', value=0, max_height=3, out_of=100)
+        screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
+        for i in range(screen_height - 19):
+            add_empty_row(self)
+        self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
+                                     step=1, out_of=100, label=True, value=0,
+                                     max_height=3)
 
     def _start_export(self, *args, **kwargs):
         # Check if the user selected input and destination
@@ -263,6 +268,9 @@ class ExportForm(nps.ActionFormMinimal):
         self.parentApp.switchFormNow()
 
 
+###############################################################################
+# Main
+###############################################################################
 class MainForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Exit'
 
@@ -309,35 +317,34 @@ class MainForm(nps.ActionFormMinimal):
             "^T": self._switch_form_templates,
             "^S": self._switch_form_screens
         })
-        self._info_lbl = self.add(nps.Textfield, value="", editable=False)
-        add_empty_row(self)
+        self._info_lbl = self.add(nps.Textfield, value="", editable=False, color='STANDOUT')
         self._tablet_model = self.add(nps.TitleFixedText, name='Model',
-                                      begin_entry_at=20,
+                                      begin_entry_at=24, relx=4,
                                       value="", editable=False)
         self._tablet_fwver = self.add(nps.TitleFixedText, name="Firmware",
-                                      begin_entry_at=20,
+                                      begin_entry_at=24, relx=4,
                                       value="", editable=False)
         self._tablet_free_space_root = self.add(nps.TitleFixedText, name="Free space /",
-                                                begin_entry_at=20,
+                                                begin_entry_at=24, relx=4,
                                                 value="", editable=False)
         self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
-                                                begin_entry_at=20,
+                                                begin_entry_at=24, relx=4,
                                                 value="", editable=False)
         self._tablet_battery_info = self.add(nps.TitleFixedText, name="Battery status",
-                                             value="", begin_entry_at=20,
-                                             editable=False)
+                                             value="", begin_entry_at=24,
+                                             relx=4, editable=False)
         self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
-                                       begin_entry_at=20, editable=False)
+                                       relx=4, begin_entry_at=24, editable=False)
         add_empty_row(self)
         add_empty_row(self)
-        add_empty_row(self)
-        self.add(nps.ButtonPress, name='Export PDF', relx=8,
+        self.add(nps.Textfield, value='Tasks', editable=False, color='STANDOUT')
+        self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
                  when_pressed_function=self._switch_form_export)
         add_empty_row(self)   
-        self.add(nps.ButtonPress, name='Manage Templates', relx=8,
+        self.add(nps.ButtonPress, name='[Manage Templates] (not yet available)', relx=3,  # TODO Templates
                  when_pressed_function=self._switch_form_templates)
         add_empty_row(self)
-        self.add(nps.ButtonPress, name='Change Screens', relx=8,
+        self.add(nps.ButtonPress, name='[Change Screens] (not yet available)', relx=3,  # TODO Screens
                  when_pressed_function=self._switch_form_screens)
 
     def exit_application(self, *args, **kwargs):
@@ -346,12 +353,12 @@ class MainForm(nps.ActionFormMinimal):
         self.parentApp.switchFormNow()
     
     def _switch_form_templates(self, *args, **kwargs):
-        self.parentApp.setNextForm('TEMPLATES')  # TODO
+        self.parentApp.setNextForm('TEMPLATES')  # TODO Templates
         self.editing = False
         self.parentApp.switchFormNow()
 
     def _switch_form_screens(self, *args, **kwargs):
-        self.parentApp.setNextForm('SCREENS')  # TODO
+        self.parentApp.setNextForm('SCREENS')  # TODO Screens
         self.editing = False
         self.parentApp.switchFormNow()
 
@@ -377,6 +384,8 @@ class RATui(nps.NPSAppManaged):
         # inject the up-to-date parametrization)
         self.addFormClass('MAIN', MainForm, self._cfg, self._connection, name='reMass')
         self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection, name='reMass: Export PDF')
+        #TODO Templates
+        #TODO Screens
 
     def onCleanExit(self):
         self._connection.close()
