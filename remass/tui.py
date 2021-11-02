@@ -141,16 +141,21 @@ class StartUpForm(nps.ActionForm):
     def _save_config(self):
         fname = self._cfg_filename.value
         if fname is None:
-            nps.notify_confirm('You must select a valid configuration file path!', title='Error', form_color='CAUTION')
+            nps.notify_confirm('You must select a valid configuration file path!',
+                               title='Error', form_color='CAUTION', editw=1)
             return
         self._update_config()
-        self._cfg.save(fname)
-        nps.notify_confirm(f'Configuration has been saved to:\n{fname}', title='Success')
-        self._cfg_text.value = self._get_cfg_text_label()
-        self._cfg_text.update()
-
-
-
+        try:
+            self._cfg.save(fname)
+            nps.notify_confirm(f'Configuration has been saved to:\n{fname}',
+                               title='Success', editw=1)
+            self._cfg_text.value = self._get_cfg_text_label()
+            self._cfg_text.update()
+        except (PermissionError, IOError) as e:
+            nps.notify_confirm("Cannot save configuration.\n"
+                               "----------------------------------------\n"
+                               f"Exception ({full_class_name(e)}):\n{e}",
+                               title='Error', form_color='CAUTION', editw=1)
 
 
 class AlphaSlider(nps.Slider):
@@ -232,14 +237,13 @@ class ExportForm(nps.ActionFormMinimal):
 
     def _start_export(self, *args, **kwargs):
         # Check if the user selected input and destination
-        if self.select_tablet.value is None or\
-           self.select_tablet.value.dirent_type != RDocument.dirent_type:
+        if self.select_tablet.value is None or self.select_tablet.value.dirent_type != RDocument.dirent_type:
             nps.notify_confirm("You must select a notebook to export!",
-                               title='Error', form_color='CAUTION')
+                               title='Error', form_color='CAUTION', editw=1)
             return False
         if self.select_local.value is None:
             nps.notify_confirm("You must select an output file!",
-                               title='Error', form_color='CAUTION')
+                               title='Error', form_color='CAUTION', editw=1)
             return False
         # raise RuntimeError(f'Need to render: {self.select_tablet.value.hierarchy_name} --> '
         #                    f'{self.select_local.value}, alpha {self.rendering_template_alpha.alpha},'
@@ -274,7 +278,7 @@ class MainForm(nps.ActionFormMinimal):
             nps.notify_confirm("Cannot connect to tablet - aborting now.\n"
                                "----------------------------------------\n"
                                f"Exception ({full_class_name(e)}):\n{e}",
-                               title='Error', form_color='CAUTION')
+                               title='Error', form_color='CAUTION', editw=1)
             # self.exit_application() will be ignored when invoked from this
             # exception handler, thus we have to quit the ugly way:
             raise RuntimeError(f'Aborting due to connection error: {e}') from None
