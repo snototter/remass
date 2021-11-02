@@ -159,7 +159,7 @@ class RFilenameCombo(nps.ComboBox):
             printme = self.value.hierarchy_name
         else:
             self.value = None
-            printme = '- Unset -'
+            printme = '- Not set -'
 
         if self.do_colors():
             self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width, self.parent.theme_manager.findPair(self))

@@ -64,6 +64,25 @@ class TitleCustomPassword(nps.TitleText):
     _entry_type = CustomPasswordEntry
 
 
+class CustomFilenameCombo(nps.FilenameCombo):
+    def _print(self):  # override (because I didn't like the "-Unset-" display)
+        if self.value == None:
+            printme = '- Not set -'
+        else:
+            try:
+                printme = self.display_value(self.value)
+            except IndexError:
+                printme = '- Error -'
+        if self.do_colors():
+            self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width, self.parent.theme_manager.findPair(self))
+        else:
+            self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width)
+
+
+class TitleCustomFilenameCombo(nps.TitleCombo):
+    _entry_type = CustomFilenameCombo
+
+
 class StartUpForm(nps.ActionForm):
     OK_BUTTON_TEXT = 'Connect'
     CANCEL_BUTTON_BR_OFFSET = (2, 20)
@@ -85,7 +104,7 @@ class StartUpForm(nps.ActionForm):
                               value=self._cfg['connection']['host'])
         self._fallback_host = self.add(nps.TitleText, name="Fallback Host", relx=4,
                                        value=self._cfg['connection']['host_fallback'])
-        self._keyfile = self.add(nps.TitleFilenameCombo, relx=4,
+        self._keyfile = self.add(TitleCustomFilenameCombo, relx=4,
                                  name="Private Key", label=True,
                                  value=self._cfg['connection']['keyfile'],
                                  select_dir=False, must_exist=True)
@@ -96,7 +115,7 @@ class StartUpForm(nps.ActionForm):
                                   editable=False, color='STANDOUT')
         cfg_dname, cfg_fname = config_filename(self._cfg.config_filename)
         cfg_path = os.path.join(cfg_dname, cfg_fname)
-        self._cfg_filename = self.add(nps.TitleFilenameCombo,
+        self._cfg_filename = self.add(TitleCustomFilenameCombo,
                                       name="Path", relx=4,
                                       value=cfg_path, select_dir=False,
                                       label=True, must_exist=False,
@@ -170,7 +189,7 @@ class AlphaSlider(nps.Slider):
 class TitleAlphaSlider(nps.TitleText):
     _entry_type = AlphaSlider
     def __init__(self, screen, *args, **kwargs):
-        super().__init__(screen, lowest=0, step=1, out_of=10, label=True, color='STANDOUT', *args, **kwargs)
+        super().__init__(screen, *args, lowest=0, step=1, out_of=10, label=True, color='STANDOUT', **kwargs)
 
     @property
     def alpha(self):
@@ -218,7 +237,7 @@ class ExportForm(nps.ActionFormMinimal):
         self.select_tablet = self.add(TitleRFilenameCombo, name="reMarkable Notebook", label=True,
                                       rm_dirents=self.fs_dirents, select_dir=False, relx=4,
                                       begin_entry_at=24)
-        self.select_local = self.add(nps.TitleFilenameCombo, name="Output PDF",
+        self.select_local = self.add(TitleCustomFilenameCombo, name="Output PDF",
                                      value='exported-notebook.pdf', select_dir=False,
                                      label=True, must_exist=False, relx=4,
                                      confirm_if_exists=True, begin_entry_at=24)
