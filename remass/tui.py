@@ -224,6 +224,8 @@ class ExportForm(nps.ActionFormMinimal):
         self._to_main()
     
     def _to_main(self, *args, **kwargs):
+        if self.is_exporting:
+            return
         self.parentApp.setNextForm('MAIN')
         self.editing = False
         self.parentApp.switchFormNow()
@@ -261,6 +263,8 @@ class ExportForm(nps.ActionFormMinimal):
                                      max_height=3)
 
     def _start_export(self, *args, **kwargs):
+        if self.is_exporting:
+            return False
         # Check if the user selected input and destination
         if self.select_tablet.value is None or self.select_tablet.value.dirent_type != RDocument.dirent_type:
             nps.notify_confirm("You must select a notebook to export!",
@@ -307,8 +311,8 @@ class ExportForm(nps.ActionFormMinimal):
                                          template_alpha=self.rendering_template_alpha.value,
                                          expand_pages=self.rendering_expand_pages.value,
                                          only_annotated=self.rendering_only_annotated.value)
-        self._toggle_widgets(True)
         self.is_exporting = False
+        self._toggle_widgets(True)
         # nps.notify_confirm('Exported TODO to TODO', # don't show message box from this thread!!
         #                    title='Info', editw=1)
 
@@ -317,6 +321,8 @@ class ExportForm(nps.ActionFormMinimal):
         self.progress_bar.display()
 
     def exit_application(self, *args, **kwargs):
+        if self.is_exporting:
+            return
         self.parentApp.setNextForm(None)
         self.editing = False
         self.parentApp.switchFormNow()
