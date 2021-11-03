@@ -6,6 +6,7 @@ https://remarkablewiki.com/tech/filesystem
 """
 from dataclasses import dataclass, field
 import os
+import getpass
 import json
 import datetime
 from typing import Callable, ClassVar, Dict, List, Tuple, Type
@@ -15,7 +16,9 @@ from paramiko import file
 from paramiko.util import ClosingContextManager
 import stat
 from pathlib import PurePosixPath
+from pdfrw.objects.pdfdict import IndirectPdfDict
 from rmrl import render
+from pdfrw import PdfReader, PdfWriter
 
 
 REMOTE_XOCHITL_DIR = '/home/root/.local/share/remarkable/xochitl'
@@ -292,6 +295,7 @@ class RemoteFile(ClosingContextManager):
         # (text-based) metadata/config/settings file
         self.decode = is_rm_textfile(filename)
         self.sftp_file = sftp_client.file(filename, mode, bufsize)
+        self.prefetch()
 
     def close(self):
         self.sftp_file.close()
@@ -338,25 +342,26 @@ class RemoteFileSystemSource(object):
             return False
 
 
-#TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
-def render_remote(client: paramiko.SSHClient, uuid: str, output_filename: str,
+def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filename: str,
                   progress_cb: Callable[[float], None], **kwargs):
-    #TODO clean up and doc
+    """Uses the SSH connection to render the given notebook remotely."""
+    #TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
+    #TODO also link to the limitations of rmrl (e.g. pencil textures)
+    #TODO Limitation: larger and more complex notebooks take a long(!) time to export
     sftp = client.open_sftp()
-    src = RemoteFileSystemSource(sftp, uuid)
+    src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)
-    # # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '53d9369c-7f2c-4b6d-b377-0fc5e71135cc'))
-    # print('RENDER OUTPUT: ', type(render_output))
-    #render_output.seek(0)
-    from pdfrw import PdfReader, PdfWriter
     pdf_stream = PdfReader(render_output)
-    # print('DUMP INFO:', pdf_stream.Info)
-    if pdf_stream.Info is not None:
-        pdf_stream.Info.Title = 'Notebook Title'  #TODO pdf_stream.Info = None if only_annotated is true
-    PdfWriter('test.pdf', trailer=pdf_stream).write()
-    # with open('render-test.pdf', "wb") as outfile:
-    #     shutil.copyfileobj(output, outfile)
-    
+    if pdf_stream is not None:
+        pdf_stream.Info = IndirectPdfDict(Title=rm_file.visible_name,
+                                          Author=getpass.getuser(),
+                                          Subject='Exported Notes',
+                                          Creator='reMass')
+        PdfWriter(output_filename, trailer=pdf_stream).write()
+        return True
+    else:
+        return False
+
 
 if __name__ == '__main__':
     import argparse

@@ -5,11 +5,12 @@ import time
 import paramiko
 import socket
 import threading
-from remass.filesystem import RDocument
+from pathlib import Path
 
 from .tablet import RAConnection
 from .config import RAConfig, config_filename
 from .fileselect import TitleRFilenameCombo
+from .filesystem import RDocument
 
 
 #TODO list:
@@ -64,6 +65,15 @@ class TitleCustomPassword(nps.TitleText):
 
 
 class CustomFilenameCombo(nps.FilenameCombo):
+    """Customizes the filename display of the default FilenameCombo"""
+    def display_value(self, vl):
+        # Try to abbreviate the user home directory
+        try:
+            f = Path(vl)
+            return str('~' / f.relative_to(Path.home()))
+        except ValueError:
+            return str(vl)
+
     def _print(self):  # override (because I didn't like the "-Unset-" display)
         if self.value == None:
             printme = '- Not set -'
@@ -285,7 +295,7 @@ class ExportForm(nps.ActionFormMinimal):
         time.sleep(2)
         self.is_exporting = True
         self.export_thread = threading.Thread(target=self._export_blocking,
-                                              args=(self.select_tablet.value.uuid, self.select_local.value,))
+                                              args=(self.select_tablet.value, self.select_local.value,))
         self.export_thread.start()
         return True
     
@@ -305,10 +315,10 @@ class ExportForm(nps.ActionFormMinimal):
         self._added_buttons['ok_button'].editable = editable
         self._added_buttons['ok_button'].display()
     
-    def _export_blocking(self, uuid, output_filename):
-        self._connection.render_document(uuid, output_filename,
+    def _export_blocking(self, rm_file, output_filename):
+        self._connection.render_document(rm_file, output_filename,
                                          self._rendering_progress_callback,
-                                         template_alpha=self.rendering_template_alpha.value,
+                                         template_alpha=self.rendering_template_alpha.alpha,
                                          expand_pages=self.rendering_expand_pages.value,
                                          only_annotated=self.rendering_only_annotated.value)
         self.is_exporting = False

@@ -25,6 +25,7 @@ setuptools.setup(
         'dataclasses',
         'npyscreen',
         'paramiko',
+        'pdfwr',
         'rmrl',
         'toml'
     ],
