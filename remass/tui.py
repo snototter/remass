@@ -1,11 +1,10 @@
 import npyscreen as nps
 # import logging
 import os
-import curses
-
+import time
 import paramiko
 import socket
-
+import threading
 from remass.filesystem import RDocument
 
 from .tablet import RAConnection
@@ -217,6 +216,8 @@ class ExportForm(nps.ActionFormMinimal):
         self._cfg = cfg
         self._connection = connection
         self.fs_root, self.fs_trash, self.fs_dirents = self._connection.get_filesystem()
+        self.export_thread = None
+        self.is_exporting = False
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
@@ -248,8 +249,8 @@ class ExportForm(nps.ActionFormMinimal):
         self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
         add_empty_row(self)
         add_empty_row(self)
-        self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
-                 when_pressed_function=self._start_export)
+        self.btn_start = self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
+                                  when_pressed_function=self._start_export)
         add_empty_row(self)
         add_empty_row(self)
         screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
@@ -269,22 +270,67 @@ class ExportForm(nps.ActionFormMinimal):
             nps.notify_confirm("You must select an output file!",
                                title='Error', form_color='CAUTION', editw=1)
             return False
-        # raise RuntimeError(f'Need to render: {self.select_tablet.value.hierarchy_name} --> '
-        #                    f'{self.select_local.value}, alpha {self.rendering_template_alpha.alpha},'
-        #                    f' expand {self.rendering_expand_pages.value}, annotated-only {self.rendering_only_annotated.value}')
-        #TODO start thread, implement callback to adjust progress bar
-        #TODO upon 100% finished, clean up & notify the user
-        self._rendering_progress_callback(42.3)
+        # Disable all inputs
+        self._toggle_widgets(False)
+        #TODO upon 100% finished, clean up & notify the user (TODO add this to while_waiting! notify_confirm)
+        self._rendering_progress_callback(0)
+        nps.notify('Exporting can take several minutes!\n'
+                   'Please be patient.\n'
+                   '------------------------------------------\n'
+                   'This form will be locked until completion.', title='Info')
+        time.sleep(2)
+        self.is_exporting = True
+        self.export_thread = threading.Thread(target=self._export_blocking,
+                                              args=(self.select_tablet.value.uuid, self.select_local.value,))
+        self.export_thread.start()
         return True
     
+    def _toggle_widgets(self, editable):
+        self.rendering_only_annotated.editable = editable
+        self.rendering_only_annotated.display()
+        self.rendering_expand_pages.editable = editable
+        self.rendering_expand_pages.display()
+        self.rendering_template_alpha.editable = editable
+        self.rendering_template_alpha.display()
+        self.select_tablet.editable = editable
+        self.select_tablet.display()
+        self.select_local.editable = editable
+        self.select_local.display()
+        self.btn_start.editable = editable
+        self.btn_start.display()
+        self._added_buttons['ok_button'].editable = editable
+        self._added_buttons['ok_button'].display()
+    
+    def _export_blocking(self, uuid, output_filename):
+        self._connection.render_document(uuid, output_filename,
+                                         self._rendering_progress_callback,
+                                         template_alpha=self.rendering_template_alpha.value,
+                                         expand_pages=self.rendering_expand_pages.value,
+                                         only_annotated=self.rendering_only_annotated.value)
+        self._toggle_widgets(True)
+        self.is_exporting = False
+        # nps.notify_confirm('Exported TODO to TODO', # don't show message box from this thread!!
+        #                    title='Info', editw=1)
+
     def _rendering_progress_callback(self, percentage):
         self.progress_bar.value = percentage
-        self.progress_bar.update()
+        self.progress_bar.display()
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
         self.editing = False
         self.parentApp.switchFormNow()
+    
+    # def while_waiting(self):
+    # TODO remove is_exporting
+    #     if self.export_thread is not None and not self.is_exporting:
+    #         nps.notify_confirm('Exported TODO to TODO', # doesn't work
+    #                            title='Info', editw=1)
+    #         time.sleep(2)
+    #         self.export_thread = None
+    #     #     self.progress_bar.update()
+    #     # if self.export_thread is not None and self.export_thread.
+    #     pass
 
 
 ###############################################################################

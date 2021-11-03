@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 import os
 import json
 import datetime
-from typing import ClassVar, Dict, List, Tuple, Type
+from typing import Callable, ClassVar, Dict, List, Tuple, Type
 from collections import deque
 import paramiko
 from paramiko import file
@@ -143,7 +143,7 @@ def dirent_from_metadata(metadata_filename: str, metadata_file):
         raise NotImplementedError(f"Data type '{data['type']} not yet supported")
 
 
-def dfs(node, indent=0):#TODO remove
+def dfs(node, indent=0):#TODO rename and prettify output
     print(f"{' '*indent}{node.visible_name} {'DIR' if isinstance(node, RCollection) else ''} {node.uuid}")
     if node.dirent_type == RCollection.dirent_type:
         for child in node.children:
@@ -176,7 +176,9 @@ def _load_dirents_remote(sftp: paramiko.SFTPClient) -> List[RDirEntry]:
         dirents.append(dirent)
     return dirents
 
+
 def _filesystem_from_dirents(dirent_list: List[RDirEntry]) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
+    """Builds the filesystem hierarchy from the given list of parsed RDirEntry objects."""
     # rM v5 has two base parents: None (root) or 'trash' (for deleted files)
     dirent_dict = dict()
     root = RCollection('root', 'My Files', version=-1, last_modified=None)
@@ -242,7 +244,7 @@ def load_local_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[s
     dirent_list = _load_dirents_local(folder)
     return _filesystem_from_dirents(dirent_list)
 
-
+#TODO local rendering
 # def render_test():
 #     from rmrl import render
 #     # import shutil
@@ -272,6 +274,7 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
 
 
 def is_rm_textfile(filename):
+    """Returns True if the given filename is a known remarkable-specific textfile."""
     if filename.endswith('.json'):
         return True
     if filename.endswith('.content'):
@@ -335,28 +338,22 @@ class RemoteFileSystemSource(object):
             return False
 
 
-#TODO the user will likely have to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates)
-#     - but this currently doesn't work for me... (no templates loaded when file is remote...)
-#     - the problem is strings vs bytes (sftpfile: b'GridRulerP' versus local file: 'GridRuleP' for template name...)
-      #TODO check whether we can easily change the template name type: https://github.com/rschroll/rmrl/blob/89b5cc38ef45251b96bd3d1c3618429b6b46db92/rmrl/document.py#L51
-      # or if we can adjust an sftpfile setting
-      # or :( if we have to override sftpfile
-      # or ... if we have to copy all the files over...
-#TODO rendering (especially REMOTE!) must be done in a separate thread (and use the progress callback)
-def render_remote(client: paramiko.SSHClient, uuid: str):
-    #     from rmrl import render
-    # # import shutil
+#TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
+def render_remote(client: paramiko.SSHClient, uuid: str, output_filename: str,
+                  progress_cb: Callable[[float], None], **kwargs):
+    #TODO clean up and doc
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, uuid)
-    render_output = render(src)
+    render_output = render(src, progress_cb=progress_cb, **kwargs)
     # # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '53d9369c-7f2c-4b6d-b377-0fc5e71135cc'))
-    print('RENDER OUTPUT: ', type(render_output))
+    # print('RENDER OUTPUT: ', type(render_output))
     #render_output.seek(0)
     from pdfrw import PdfReader, PdfWriter
     pdf_stream = PdfReader(render_output)
-    print('DUMP INFO:', pdf_stream.Info)
-    pdf_stream.Info.Title = 'Notebook Title'
-    PdfWriter('render-test.pdf', trailer=pdf_stream).write()
+    # print('DUMP INFO:', pdf_stream.Info)
+    if pdf_stream.Info is not None:
+        pdf_stream.Info.Title = 'Notebook Title'  #TODO pdf_stream.Info = None if only_annotated is true
+    PdfWriter('test.pdf', trailer=pdf_stream).write()
     # with open('render-test.pdf', "wb") as outfile:
     #     shutil.copyfileobj(output, outfile)
     

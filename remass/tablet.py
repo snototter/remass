@@ -1,7 +1,7 @@
 """Handles connection & device queries."""
 import logging
 import os
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple
 import paramiko
 import socket
 import re
@@ -147,8 +147,10 @@ class RAConnection(object):
     def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
         return load_remote_filesystem(self._client)
     
-    def render_document(self, uuid: str): #TODO return at least flag? output_filename, etc.
-        render_remote(self._client, uuid)
+    def render_document(self, uuid: str, output_filename: str,
+                        progress_cb: Callable[[float], None], **kwargs):
+        """kwargs will be passed to rmrl.render()"""
+        render_remote(self._client, uuid, output_filename, progress_cb, **kwargs)
 
     def is_connected(self):
         # Returns True if the client is still connected and the session is
