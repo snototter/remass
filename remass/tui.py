@@ -10,7 +10,7 @@ import platform
 import subprocess
 
 from .tablet import RAConnection
-from .config import RAConfig, config_filename
+from .config import RAConfig, abbreviate_user
 from .fileselect import TitleRFilenameCombo
 from .filesystem import RDocument
 
@@ -71,18 +71,16 @@ class CustomFilenameCombo(nps.FilenameCombo):
     def __init__(self, screen, *args, when_value_edited_cb=None, **kwargs):
         super().__init__(screen, *args, **kwargs)
         self.when_value_edited_cb = when_value_edited_cb
+        # self.add_handlers({
+        #     curses.ascii.ESC:  self.h_exit_escape
+        # })#TODO check how we can abort the file selection by ESC (this likely needs a custom selector form :-/ )
 
     def when_value_edited(self):
         if self.when_value_edited_cb is not None:
             self.when_value_edited_cb()
 
     def display_value(self, vl):
-        # Try to abbreviate the user home directory
-        try:
-            f = Path(vl)
-            return str('~' / f.relative_to(Path.home()))
-        except ValueError:
-            return str(vl)
+        return abbreviate_user(str(vl))
 
     def _print(self):  # override (because I didn't like the "-Unset-" display)
         if self.value == None:
@@ -132,11 +130,9 @@ class StartUpForm(nps.ActionForm):
         add_empty_row(self)
         self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(),
                                   editable=False, color='STANDOUT')
-        cfg_dname, cfg_fname = config_filename(self._cfg.config_filename)
-        cfg_path = os.path.join(cfg_dname, cfg_fname)
         self._cfg_filename = self.add(TitleCustomFilenameCombo,
                                       name="Path", relx=4,
-                                      value=cfg_path, select_dir=False,
+                                      value=self._cfg.config_filename, select_dir=False,
                                       label=True, must_exist=False,
                                       confirm_if_exists=True)
         self.add(nps.ButtonPress, name='[Save Configuration File]', relx=3,
@@ -320,11 +316,14 @@ class ExportForm(nps.ActionFormMinimal):
                                      max_height=3)
 
     def _on_remote_file_selected(self):
-        if self.auto_replace_local_filename and self.select_tablet.value is not None:
-            #TODO replace special characters, etc
-            fn = safe_filename(self.select_tablet.value.visible_name) + '.pdf'
-            self.select_local.value = fn
-            self.prev_auto_replaced_filename = fn
+        if self.auto_replace_local_filename:
+            if self.select_tablet.value is None:
+                self.select_local.value = None
+            else:
+                fn = os.path.join(abbreviate_user(self._cfg.export_dir),
+                                safe_filename(self.select_tablet.value.visible_name) + '.pdf')
+                self.select_local.value = fn
+                self.prev_auto_replaced_filename = fn
             self.select_local.display()
 
     def _on_local_file_selected(self):
@@ -354,12 +353,13 @@ class ExportForm(nps.ActionFormMinimal):
         curses.flushinp()
         self.is_exporting = True
         self.export_thread = threading.Thread(target=self._export_blocking,
-                                              args=(self.select_tablet.value, self.select_local.value,))
+                                              args=(self.select_tablet.value, 
+                                                    os.path.expanduser(self.select_local.value,)))
         self.export_thread.start()
         return True
 
     def _open_pdf(self, *args, **kwargs):
-        fname = self.select_local.value
+        fname = os.path.expanduser(self.select_local.value)
         if fname is None or not os.path.exists(fname):
             nps.notify_confirm('Nothing exported so far.', title='Error', form_color='CAUTION', editw=1)
         else:
@@ -397,6 +397,8 @@ class ExportForm(nps.ActionFormMinimal):
                                          expand_pages=self.rendering_expand_pages.value,
                                          only_annotated=self.rendering_only_annotated.value)
         self.is_exporting = False
+        # Re-enable all widgets & notify the user (as we blocked all user 
+        # inputs, this works from within this export thread, too)
         self._toggle_widgets(True)
         nps.notify(f"Successfully exported\n  '{rm_file.hierarchy_name}'\nto\n"
                    f"  '{output_filename}", title='Info', form_color='STANDOUT')
@@ -407,10 +409,6 @@ class ExportForm(nps.ActionFormMinimal):
     def _rendering_progress_callback(self, percentage):
         self.progress_bar.value = percentage
         self.progress_bar.display()
-        # if percentage == 100:  #TODO invoking here worked so far (although it's from another thread)
-        #     nps.notify('Export finished!!!!\n', title='Info')
-        #     curses.napms(1500)
-        #     curses.flushinp()
 
     def exit_application(self, *args, **kwargs):
         if self.is_exporting:

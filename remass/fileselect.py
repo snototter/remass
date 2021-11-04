@@ -15,6 +15,7 @@ class RFileGrid(nps.SimpleGrid):
             curses.ascii.NL:    self.h_select_file,
             curses.ascii.CR:    self.h_select_file,
             curses.ascii.SP:    self.h_select_file,
+            curses.ascii.ESC:   self.abort_selection,
         })
     
     def display_value(self, vl):
@@ -61,6 +62,11 @@ class RFileGrid(nps.SimpleGrid):
             self.parent.try_exit()
         else:
             self.change_dir(dirent)
+
+    def abort_selection(self, _input):
+        self.parent.selected_file = None
+        self.h_exit_down(None)
+        self.parent.try_exit()
 
     def h_move_cell_right(self, inpt):  # override
         if self.edit_cell[1] <= len(self.values[self.edit_cell[0]]) -2:   # Only allow move to end of current line
@@ -109,13 +115,16 @@ class RFileSelector(nps.FormBaseNew):
     def try_exit(self):
         if self.select_dir and self.selected_folder is None:
             self.exit_editing()
+            # self.display(clear=True)
             return False
 
         if not self.select_dir and self.selected_file is None:
             self.exit_editing()
+            # self.display(clear=True)
             return False
 
         self.exit_editing()
+        # self.display(clear=True)
         return True
         
     def create(self):

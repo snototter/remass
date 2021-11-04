@@ -6,9 +6,20 @@ import appdirs
 import os
 import toml
 import stat
-
+from pathlib import Path
+import platform
 
 APP_NAME = 'remass'
+
+
+def abbreviate_user(path: str):
+    """Tries to abbreviate the home dir within the given path"""
+    try:
+        f = Path(path)
+        home = '%USERPROFILE%' if platform.system() == 'Windows' else '~'
+        return str(home / f.relative_to(Path.home()))
+    except ValueError:
+        return path
 
 
 def config_filename(filename: str = None) -> Tuple[str, str]:
@@ -27,6 +38,7 @@ def setup_app_dir(folder: str) -> str:
     if folder is None:
         folder = appdirs.user_data_dir(appname=APP_NAME)
     subfolders = [
+        os.path.join(folder, 'exports'),
         os.path.join(folder, 'templates'),
         os.path.join(folder, 'screens')]
     for sf in subfolders:
@@ -89,6 +101,18 @@ class RAConfig(object):
         # Ensure we have the proper folder structure in our app's data directory
         self.load(self.config_filename)
         self.app_dir = setup_app_dir(None if args is None else args.dir)
+    
+    @property
+    def export_dir(self):
+        return os.path.join(self.app_dir, 'exports')
+    
+    @property
+    def template_dir(self):
+        return os.path.join(self.app_dir, 'templates')
+
+    @property
+    def screen_dir(self):
+        return os.path.join(self.app_dir, 'screens')
 
     def load(self, filename: str = None) -> None:
         dname, fname = config_filename(filename)
