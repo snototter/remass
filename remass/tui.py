@@ -1,7 +1,7 @@
 import npyscreen as nps
 # import logging
 import os
-import time
+import curses
 import paramiko
 import socket
 import threading
@@ -315,11 +315,11 @@ class ExportForm(nps.ActionFormMinimal):
         self._toggle_widgets(False)
         #TODO upon 100% finished, clean up & notify the user (TODO add this to while_waiting! notify_confirm)
         self._rendering_progress_callback(0)
-        nps.notify('Exporting can take several minutes!\n'
-                   'Please be patient.\n'
+        nps.notify('Export started - please be patient.\n'
                    '------------------------------------------\n'
                    'This form will be locked until completion.', title='Info')
-        time.sleep(2)
+        curses.napms(1500)
+        curses.flushinp()
         self.is_exporting = True
         self.export_thread = threading.Thread(target=self._export_blocking,
                                               args=(self.select_tablet.value, self.select_local.value,))
