@@ -146,11 +146,12 @@ def dirent_from_metadata(metadata_filename: str, metadata_file):
         raise NotImplementedError(f"Data type '{data['type']} not yet supported")
 
 
-def dfs(node, indent=0):#TODO rename and prettify output
-    print(f"{' '*indent}{node.visible_name} {'DIR' if isinstance(node, RCollection) else ''} {node.uuid}")
+def print_tree_structure(node, indent=0):
+    """Simple DFS to print the file hierarchy starting at 'node'"""
+    print(f"{' '*indent}{node.visible_name} {'[directory]' if isinstance(node, RCollection) else '[file]'}: {node.uuid}")
     if node.dirent_type == RCollection.dirent_type:
         for child in node.children:
-            dfs(child, indent+4)
+            print_tree_structure(child, indent+4)
 
 
 def _load_dirents_local(folder: str) -> List[RDirEntry]:
@@ -347,7 +348,6 @@ def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filenam
     """Uses the SSH connection to render the given notebook remotely."""
     #TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
     #TODO also link to the limitations of rmrl (e.g. pencil textures)
-    #TODO Limitation: larger and more complex notebooks take a long(!) time to export
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)
@@ -371,7 +371,7 @@ if __name__ == '__main__':
     root, trash, _ = load_local_filesystem(args.backup_path)
 
     print('Root')
-    dfs(root)
+    print_tree_structure(root)
     print()
     print('Trash')
-    dfs(trash)
+    print_tree_structure(trash)

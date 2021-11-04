@@ -148,10 +148,15 @@ def selectRFile(rm_dirents, starting_value=None, select_dir=False, *args, **keyw
 class RFilenameCombo(nps.ComboBox):
     """You can EITHER select a notebook/document OR a folder, depending on how
     you set select_dir"""
-    def __init__(self, screen, rm_dirents: List[RDirEntry], select_dir: bool, *args, **keywords):
+    def __init__(self, screen, rm_dirents: List[RDirEntry], select_dir: bool, *args, when_value_edited_cb=None, **keywords):
         self.select_dir = select_dir
         self.rm_dirents = rm_dirents
+        self.when_value_edited_cb = when_value_edited_cb
         super(RFilenameCombo, self).__init__(screen, *args, **keywords)
+
+    def when_value_edited(self):
+        if self.when_value_edited_cb is not None:
+            self.when_value_edited_cb()
 
     def _print(self):
         if isinstance(self.value, RDirEntry):
@@ -220,7 +225,5 @@ if __name__ == "__main__":
         root, trash, dirents = dummy_filesystem()
     else:
         root, trash, dirents = load_local_filesystem(args.bp)
-    # dfs(root)
-    # dfs(trash)
     App = TestApp(dirents)
     App.run()

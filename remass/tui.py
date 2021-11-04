@@ -66,6 +66,14 @@ class TitleCustomPassword(nps.TitleText):
 
 class CustomFilenameCombo(nps.FilenameCombo):
     """Customizes the filename display of the default FilenameCombo"""
+    def __init__(self, screen, *args, when_value_edited_cb=None, **kwargs):
+        super().__init__(screen, *args, **kwargs)
+        self.when_value_edited_cb = when_value_edited_cb
+
+    def when_value_edited(self):
+        if self.when_value_edited_cb is not None:
+            self.when_value_edited_cb()
+
     def display_value(self, vl):
         # Try to abbreviate the user home directory
         try:
@@ -228,11 +236,15 @@ class ExportForm(nps.ActionFormMinimal):
         self.fs_root, self.fs_trash, self.fs_dirents = self._connection.get_filesystem()
         self.export_thread = None
         self.is_exporting = False
+        # As long as the user has not manually set a local output file name, we
+        # keep suggesting a suitable filename based on the selected (remote) notebook
+        self.auto_replace_local_filename = True  # Flag indicating if we're still allowed to auto-replace
+        self.prev_auto_replaced_filename = None  # Needed because a widget's when_value_changed is also triggered if the user just skips over the widget
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
         self._to_main()
-    
+
     def _to_main(self, *args, **kwargs):
         if self.is_exporting:
             return
@@ -248,10 +260,13 @@ class ExportForm(nps.ActionFormMinimal):
         })
         self.add(nps.Textfield, value="Files:", editable=False, color='STANDOUT')
         self.select_tablet = self.add(TitleRFilenameCombo, name="reMarkable Notebook", label=True,
+                                      when_value_edited_cb=self._on_remote_file_selected,
                                       rm_dirents=self.fs_dirents, select_dir=False, relx=4,
                                       begin_entry_at=24)
         self.select_local = self.add(TitleCustomFilenameCombo, name="Output PDF",
-                                     value='exported-notebook.pdf', select_dir=False,
+                                    #  value='exported-notebook.pdf', select_dir=False,
+                                     when_value_edited_cb=self._on_local_file_selected,
+                                     value=None, select_dir=False,
                                      label=True, must_exist=False, relx=4,
                                      confirm_if_exists=True, begin_entry_at=24)
         add_empty_row(self)
@@ -271,6 +286,18 @@ class ExportForm(nps.ActionFormMinimal):
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
                                      step=1, out_of=100, label=True, value=0,
                                      max_height=3)
+
+    def _on_remote_file_selected(self):
+        if self.auto_replace_local_filename and self.select_tablet.value is not None:
+            #TODO replace special characters, etc
+            fn = self.select_tablet.value.visible_name.replace(' ', '-') + '.pdf'
+            self.select_local.value = fn
+            self.prev_auto_replaced_filename = fn
+            self.select_local.display()
+
+    def _on_local_file_selected(self):
+        if self.select_local.value is not None and self.select_local.value != self.prev_auto_replaced_filename:
+            self.auto_replace_local_filename = False
 
     def _start_export(self, *args, **kwargs):
         if self.is_exporting:
