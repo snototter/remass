@@ -6,6 +6,8 @@ import paramiko
 import socket
 import threading
 from pathlib import Path
+import platform
+import subprocess
 
 from .tablet import RAConnection
 from .config import RAConfig, config_filename
@@ -228,6 +230,34 @@ class ProgressBarBox(nps.BoxTitle):
     _contained_widget = ProgressBar
 
 
+def safe_filename(fname: str) -> str:
+    """
+    Replaces all special (ASCII-only) characters in the given filename.
+    Note that this will also replace path separators if present.
+    """
+    replacements = {
+        '/': '_',
+        '\\': '_',
+        ':': '_',
+        '?': '-',
+        '*': '-',
+        '%': '_',
+        '$': '_',
+        '|': '',
+        '"': '',
+        '<': '',
+        '>': ''
+    }
+    for needle, rep in replacements.items():
+        fname = fname.replace(needle, rep)
+    
+    if platform.system() == 'Windows':
+        # Filenames mustn't end with a dot on windows
+        if fname[-1] == '.':
+            return fname[:-1]
+    return fname
+
+
 class ExportForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
     def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
@@ -279,6 +309,8 @@ class ExportForm(nps.ActionFormMinimal):
         self.btn_start = self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
                                   when_pressed_function=self._start_export)
         add_empty_row(self)
+        self.btn_open = self.add(nps.ButtonPress, name='[Open PDF]', relx=3,
+                                 when_pressed_function=self._open_pdf)
         add_empty_row(self)
         screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
         for i in range(screen_height - 19):
@@ -290,7 +322,7 @@ class ExportForm(nps.ActionFormMinimal):
     def _on_remote_file_selected(self):
         if self.auto_replace_local_filename and self.select_tablet.value is not None:
             #TODO replace special characters, etc
-            fn = self.select_tablet.value.visible_name.replace(' ', '-') + '.pdf'
+            fn = safe_filename(self.select_tablet.value.visible_name) + '.pdf'
             self.select_local.value = fn
             self.prev_auto_replaced_filename = fn
             self.select_local.display()
@@ -325,7 +357,21 @@ class ExportForm(nps.ActionFormMinimal):
                                               args=(self.select_tablet.value, self.select_local.value,))
         self.export_thread.start()
         return True
-    
+
+    def _open_pdf(self, *args, **kwargs):
+        fname = self.select_local.value
+        if fname is None or not os.path.exists(fname):
+            nps.notify_confirm('Nothing exported so far.', title='Error', form_color='CAUTION', editw=1)
+        else:
+            if platform.system() == 'Darwin':  # macOS
+                subprocess.call(('open', fname),
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            elif platform.system() == 'Windows':  # Windows
+                os.startfile(fname)
+            else:  # Linux
+                subprocess.call(('xdg-open', fname),
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
     def _toggle_widgets(self, editable):
         self.rendering_only_annotated.editable = editable
         self.rendering_only_annotated.display()
@@ -339,6 +385,8 @@ class ExportForm(nps.ActionFormMinimal):
         self.select_local.display()
         self.btn_start.editable = editable
         self.btn_start.display()
+        self.btn_open.editable = editable
+        self.btn_open.display()
         self._added_buttons['ok_button'].editable = editable
         self._added_buttons['ok_button'].display()
     
@@ -350,12 +398,19 @@ class ExportForm(nps.ActionFormMinimal):
                                          only_annotated=self.rendering_only_annotated.value)
         self.is_exporting = False
         self._toggle_widgets(True)
-        # nps.notify_confirm('Exported TODO to TODO', # don't show message box from this thread!!
-        #                    title='Info', editw=1)
+        nps.notify(f"Successfully exported\n  '{rm_file.hierarchy_name}'\nto\n"
+                   f"  '{output_filename}", title='Info', form_color='STANDOUT')
+        curses.napms(1500)
+        curses.flushinp()
+        self.display(clear=True)
 
     def _rendering_progress_callback(self, percentage):
         self.progress_bar.value = percentage
         self.progress_bar.display()
+        # if percentage == 100:  #TODO invoking here worked so far (although it's from another thread)
+        #     nps.notify('Export finished!!!!\n', title='Info')
+        #     curses.napms(1500)
+        #     curses.flushinp()
 
     def exit_application(self, *args, **kwargs):
         if self.is_exporting:
@@ -363,17 +418,6 @@ class ExportForm(nps.ActionFormMinimal):
         self.parentApp.setNextForm(None)
         self.editing = False
         self.parentApp.switchFormNow()
-    
-    # def while_waiting(self):
-    # TODO remove is_exporting
-    #     if self.export_thread is not None and not self.is_exporting:
-    #         nps.notify_confirm('Exported TODO to TODO', # doesn't work
-    #                            title='Info', editw=1)
-    #         time.sleep(2)
-    #         self.export_thread = None
-    #     #     self.progress_bar.update()
-    #     # if self.export_thread is not None and self.export_thread.
-    #     pass
 
 
 ###############################################################################
