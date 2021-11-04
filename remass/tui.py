@@ -45,8 +45,8 @@ class CustomPasswordEntry(nps.Textfield):
     """Extension to npyscreen's PasswordEntry which allows overriding the
     password replacement character."""
     def __init__(self, *args, pwd_char: str='*', **kwargs):
-        self.pwd_char = pwd_char
         super().__init__(*args, **kwargs)
+        self.pwd_char = pwd_char
 
     def _print(self):
         strlen = len(self.value)
@@ -189,6 +189,51 @@ class StartUpForm(nps.ActionForm):
 ###############################################################################
 # PDF Export
 ###############################################################################
+class PageRange(nps.Textfield):
+    """
+    Allows parsing page range inputs, e.g. 1,2-5,17
+
+    User inputs are exptected to be 1-based; start and end are inclusive.
+    Its .page attribute parses the input into a list of tuple[start, end]
+    Special:
+    '*' denotes 'all', parsed as:       (1, -1)
+    '-X' denotes '1 to X', parsed as:   (1,  X)
+    'X-' denotes 'X to end', parsed as: (X, -1) 
+    """
+
+    def _parse_token(self, token: str):
+        token = token.strip()
+        if token == '*':
+            return (1, -1)
+        elif '-' in token:
+            parts = [p.strip() for p in token.split('-')]
+            return (int(parts[0]) if len(parts[0]) > 0 else 1,
+                    int(parts[1]) if len(parts[1]) > 0 else -1)
+        else:
+            return (int(token), int(token))
+
+    @property
+    def pages(self):
+        if self.value is None:
+            return None
+        self.value = self.value.strip()
+        if len(self.value) == 0:
+            return None
+        elif self.value == '*':
+            return [(1, -1), ]
+        else:
+            tokens = self.value.replace(';', ',').split(',')
+            return [self._parse_token(token) for token in tokens]
+
+
+class TitlePageRange(nps.TitleText):
+    _entry_type = PageRange
+
+    @property
+    def pages(self):
+        return self.entry_widget.pages
+
+
 class AlphaSlider(nps.Slider):
     """Slider widget to select a transparency/alpha value in [0,1] with increments of 0.1"""
     def translate_value(self):
@@ -297,6 +342,7 @@ class ExportForm(nps.ActionFormMinimal):
                                      confirm_if_exists=True, begin_entry_at=24)
         add_empty_row(self)
         self.add(nps.Textfield, value="Rendering Options:", editable=False, color='STANDOUT')
+        self.rendering_pages = self.add(TitlePageRange, name='Pages to Export', value='*', relx=4, begin_entry_at=24)
         self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24, relx=4)
         self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True, relx=4)
         self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
@@ -309,7 +355,7 @@ class ExportForm(nps.ActionFormMinimal):
                                  when_pressed_function=self._open_pdf)
         add_empty_row(self)
         screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
-        for i in range(screen_height - 19):
+        for i in range(screen_height - 20):
             add_empty_row(self)
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
                                      step=1, out_of=100, label=True, value=0,
@@ -333,6 +379,7 @@ class ExportForm(nps.ActionFormMinimal):
     def _start_export(self, *args, **kwargs):
         if self.is_exporting:
             return False
+        # raise RuntimeError(f'TODO handle page range: {"..".join([str(x) for x in self.rendering_pages.pages])}')
         # Check if the user selected input and destination
         if self.select_tablet.value is None or self.select_tablet.value.dirent_type != RDocument.dirent_type:
             nps.notify_confirm("You must select a notebook to export!",
