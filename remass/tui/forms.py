@@ -154,7 +154,7 @@ class ExportForm(nps.ActionFormMinimal):
         self.rendering_pages = self.add(TitlePageRange, name='Pages to Export', value='*', relx=4, begin_entry_at=24)
         self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24, relx=4)
         self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True, relx=4)
-        self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
+        # self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
         add_empty_row(self)
         add_empty_row(self)
         self.btn_start = self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
@@ -229,8 +229,8 @@ class ExportForm(nps.ActionFormMinimal):
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def _toggle_widgets(self, editable):
-        self.rendering_only_annotated.editable = editable
-        self.rendering_only_annotated.display()
+        # self.rendering_only_annotated.editable = editable
+        # self.rendering_only_annotated.display()
         self.rendering_expand_pages.editable = editable
         self.rendering_expand_pages.display()
         self.rendering_template_alpha.editable = editable
@@ -251,7 +251,8 @@ class ExportForm(nps.ActionFormMinimal):
                                          self._rendering_progress_callback,
                                          template_alpha=self.rendering_template_alpha.alpha,
                                          expand_pages=self.rendering_expand_pages.value,
-                                         only_annotated=self.rendering_only_annotated.value)
+                                        #  only_annotated=self.rendering_only_annotated.value
+                                         )
         self.is_exporting = False
         # Re-enable all widgets & notify the user (as we blocked all user 
         # inputs, this works from within this export thread, too)
