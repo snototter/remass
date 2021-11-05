@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 from typing import List
 import npyscreen as nps
-import os
 import curses
-from .filesystem import RCollection, RDirEntry, RDocument, _RLink
+from ..filesystem import RCollection, RDirEntry, RDocument, _RLink
 
 
 class RFileGrid(nps.SimpleGrid):
@@ -46,7 +45,7 @@ class RFileGrid(nps.SimpleGrid):
                 grid_values.append([])
                 row_number += 1
             grid_values[row_number].append(f)
-            # if f == selected_file:  # if we set the edit_cell, we cannot navigate the grid anymore (too lazy to debug the nps widget)
+            # if f == selected_file:  # if we set the edit_cell, we cannot navigate the grid anymore (had no time to debug the underlying mechanisms)
             #     self.edit_cell = [row_number, col_number]
             col_number += 1
         self.values = grid_values
@@ -56,7 +55,6 @@ class RFileGrid(nps.SimpleGrid):
     def h_select_file(self, *args, **keywrods):
         dirent = self.values[self.edit_cell[0]][self.edit_cell[1]]
         if dirent.dirent_type == RDocument.dirent_type:
-            # self.parent.wCommand.value = dirent
             self.parent.selected_file = dirent
             self.h_exit_down(None)
             self.parent.try_exit()
@@ -92,6 +90,7 @@ class RFileGrid(nps.SimpleGrid):
             self.h_scroll_left(inpt)
         self.on_select(inpt)
 
+
 class RFileSelector(nps.FormBaseNew):
     def __init__(self,
                  rm_dirents, 
@@ -115,16 +114,13 @@ class RFileSelector(nps.FormBaseNew):
     def try_exit(self):
         if self.select_dir and self.selected_folder is None:
             self.exit_editing()
-            # self.display(clear=True)
             return False
 
         if not self.select_dir and self.selected_file is None:
             self.exit_editing()
-            # self.display(clear=True)
             return False
 
         self.exit_editing()
-        # self.display(clear=True)
         return True
         
     def create(self):
@@ -146,13 +142,15 @@ class RFileSelector(nps.FormBaseNew):
 
     def adjust_widgets(self):
         self.update_grid()
-        
+
+
 def selectRFile(rm_dirents, starting_value=None, select_dir=False, *args, **keywords):
     F = RFileSelector(rm_dirents, starting_value, *args, **keywords)
     F.update_grid()
     F.display()
     F.edit()    
     return F.selected_folder if select_dir else F.selected_file
+
 
 class RFilenameCombo(nps.ComboBox):
     """You can EITHER select a notebook/document OR a folder, depending on how
@@ -225,7 +223,7 @@ class TestApp(nps.NPSAppManaged):
 
 
 if __name__ == "__main__":
-    from .filesystem import load_local_filesystem, dummy_filesystem
+    from ..filesystem import load_local_filesystem, dummy_filesystem
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--bp', type=str, help='Path to local backup copy of xochitl files.', default=None)
