@@ -25,8 +25,12 @@ setuptools.setup(
         'dataclasses',
         'npyscreen',
         'paramiko',
-        'pdfwr',
-        'rmrl',
+        'pdfrw>=0.4',
+        'reportlab>=3.5.59',
+        'svglib>=1.0.1',
+        'xdg',
+        'rmrl @ git+https://github.com/snototter/rmrl.git',
+        #'rmrl',
         'toml'
     ],
     classifiers=[

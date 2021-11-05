@@ -188,7 +188,6 @@ class ExportForm(nps.ActionFormMinimal):
     def _start_export(self, *args, **kwargs):
         if self.is_exporting:
             return False
-        # raise RuntimeError(f'TODO handle page range: {"..".join([str(x) for x in self.rendering_pages.pages])}')
         # Check if the user selected input and destination
         if self.select_tablet.value is None or self.select_tablet.value.dirent_type != RDocument.dirent_type:
             nps.notify_confirm("You must select a notebook to export!",
@@ -200,12 +199,11 @@ class ExportForm(nps.ActionFormMinimal):
             return False
         # Disable all inputs
         self._toggle_widgets(False)
-        #TODO upon 100% finished, clean up & notify the user (TODO add this to while_waiting! notify_confirm)
         self._rendering_progress_callback(0)
         nps.notify('Export started - please be patient.\n'
                    '------------------------------------------\n'
                    'This form will be locked until completion.', title='Info')
-        curses.napms(1500)
+        curses.napms(1200)
         curses.flushinp()
         self.is_exporting = True
         self.export_thread = threading.Thread(target=self._export_blocking,
@@ -252,6 +250,7 @@ class ExportForm(nps.ActionFormMinimal):
                                          template_alpha=self.rendering_template_alpha.alpha,
                                          expand_pages=self.rendering_expand_pages.value,
                                         #  only_annotated=self.rendering_only_annotated.value
+                                         page_selection=self.rendering_pages.pages
                                          )
         self.is_exporting = False
         # Re-enable all widgets & notify the user (as we blocked all user 
