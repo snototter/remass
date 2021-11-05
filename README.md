@@ -15,7 +15,7 @@ TODO Screenshots
   On Ubuntu 20.04, Python 3.8 is the default version at the time of writing.  
   On Ubuntu 18.04 (and like up to 19.10, but didn't check), you have to install it manually:  
   `sudo apt install python3.8 python3.8-venv`
-* `reMass` uses [`pdf2image`](https://pypi.org/project/pdf2image/) to convert PDF pages to images. This relies on the `pdftoppm` and `pdftocairo` utils from [poppler](https://poppler.freedesktop.org/).  
+* `reMass` uses [`pdf2image`](https://pypi.org/project/pdf2image/) to convert PDF pages to images. This relies on [poppler](https://poppler.freedesktop.org/).  
    Refer to the [install instruction](https://pypi.org/project/pdf2image/) of `pdf2image` (on most Linux distributions, you just need to `sudo apt install poppler-utils`)
 
 #### Install reMass
