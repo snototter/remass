@@ -161,13 +161,14 @@ class ExportForm(nps.ActionFormMinimal):
         add_empty_row(self)
         self.btn_start = self.add(nps.ButtonPress, name='[Start Export]', relx=3,
                                   when_pressed_function=self._start_export)
+        add_empty_row(self)
         self.btn_open_folder = self.add(nps.ButtonPress, name='[Open Output Folder]', relx=3,
                                         when_pressed_function=self._open_folder)
         self.btn_open_pdf = self.add(nps.ButtonPress, name='[Open PDF]', relx=3,
                                      when_pressed_function=self._open_pdf)
         add_empty_row(self)
         screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
-        for i in range(screen_height - 23):
+        for i in range(screen_height - 22):
             add_empty_row(self)
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
                                      step=1, out_of=100, label=True, value=0,

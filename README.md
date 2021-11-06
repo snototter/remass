@@ -1,5 +1,5 @@
 # reMarkable Assistant
-A curses-based TUI enabling customization (screens &amp; templates) and export (PDF &amp; PNG) for my reMarkable e-ink tablet.
+A curses-based TUI enabling customization (screens &amp; templates) and export (PDF &amp; PNG) for reMarkable e-ink tablets.
 
 ## Disclaimer
 This is not an official reMarkable product, and I am not affiliated with reMarkable AS in any way.  
@@ -23,3 +23,13 @@ TODO doc venv setup (local + via github)
 
 #### Post-Install Steps
 rmrl load templates
+
+#### Miscellaneous (Linux)
+* To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
+  ```bash
+  # Show known MIME associations
+  cat ~/.config/mimeapps.list 
+
+  # Change via xdg-mime, e.g. use 'nemo' as default file browser
+  xdg-mime default nemo.desktop inode/directory
+  ```
