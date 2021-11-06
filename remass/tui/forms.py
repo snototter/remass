@@ -207,16 +207,17 @@ class ExportForm(nps.ActionFormMinimal):
         # Disable all inputs
         self._toggle_widgets(False)
         self._rendering_progress_callback(0)
-        nps.notify('Export started - please be patient.\n'
-                   '------------------------------------------\n'
-                   'This form will be locked until completion.', title='Info')
-        curses.napms(1200)
-        curses.flushinp()
-        self.is_exporting = True
-        self.export_thread = threading.Thread(target=self._export_blocking,
-                                              args=(self.select_tablet.value, 
-                                                    self.select_local.filename,))
-        self.export_thread.start()
+        if nps.notify_ok_cancel('Do you really want to export:\n'
+                                f"    '{self.select_tablet.value.hierarchy_name}'\nto\n"
+                                f"    '{abbreviate_user(self.select_local.value)}'?"
+                                '\n------------------------------------------------------\n'
+                                'This form will be >locked< until completion.',
+                                title='Confirmation', editw=1):  # Select 'cancel' by default (to prevent premature export start)
+            self.is_exporting = True
+            self.export_thread = threading.Thread(target=self._export_blocking,
+                                                args=(self.select_tablet.value, 
+                                                        self.select_local.filename,))
+            self.export_thread.start()
         return True
 
     def _open_pdf(self, *args, **kwargs):
@@ -287,7 +288,7 @@ class ExportForm(nps.ActionFormMinimal):
                                          )
         if self.rendering_png.value:
             output_folder = os.path.dirname(output_filename)
-            notification_suffix = '\n------------------------------------------\n'\
+            notification_suffix = '\n------------------------------------------------------\n'\
                                   f"\nPNGs have been exported to\n"\
                                   f"  '{abbreviate_user(output_folder)}'"
             fname = os.path.splitext(os.path.basename(output_filename))[0]
