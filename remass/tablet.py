@@ -10,7 +10,7 @@ from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesyste
 
 
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
-                     seconds: int = 0):
+                     seconds: int = 0) -> str:
     """Returns a simplified string representation of the given timedelta."""
     s = '' if days == 0 else f'{days:d}d'
     if hours > 0:
@@ -28,7 +28,7 @@ def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
     return s
 
 
-def format_uptime(uptime: str):
+def format_uptime(uptime: str) -> str:
     """Returns a simplified string representation of the `uptime` output."""
     match = re.search(r"up\s+(\d*.*),\s*load.*$", uptime)
     if match is None:
@@ -68,7 +68,7 @@ def format_uptime(uptime: str):
 #     return matches
 
 
-def ssh_cmd_output(client: paramiko.SSHClient, cmd: str):
+def ssh_cmd_output(client: paramiko.SSHClient, cmd: str) -> str:
     _, out, _ = client.exec_command(cmd)
     return out.read().decode("utf-8").strip()
 
@@ -78,7 +78,7 @@ class RAConnection(object):
         self._cfg = config['connection']
         self._client = None
     
-    def _connect(self, host):
+    def _connect(self, host) -> None:
         self._client = paramiko.SSHClient()
         self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -92,7 +92,7 @@ class RAConnection(object):
                             look_for_keys=False)
         logging.getLogger(__name__).info(f'Connected to {self.get_tablet_model()}')
 
-    def open(self):
+    def open(self) -> None:
         if self._client is not None:
             return
         try:
@@ -103,14 +103,14 @@ class RAConnection(object):
             else:
                 raise e
     
-    def close(self):
+    def close(self) -> None:
         if self._client is not None:
             self._client.close()
     
-    def get_tablet_model(self):
+    def get_tablet_model(self) -> str:
         return ssh_cmd_output(self._client, "cat /sys/devices/soc0/machine")
     
-    def get_firmware_version(self):
+    def get_firmware_version(self) -> str:
         version_map = {
             "20211014151303": "rM2 v2.10.2.356",
             "20211014150444": "rM1 v2.10.2.356",
@@ -132,13 +132,16 @@ class RAConnection(object):
         vstr = ssh_cmd_output(self._client, "cat /etc/version")
         return version_map.get(vstr, vstr)
 
-    def get_free_space(self, mount_point: str = '/'):
+    def get_hostname(self) -> str:
+        return ssh_cmd_output(self._client, "cat /etc/hostname")
+
+    def get_free_space(self, mount_point: str = '/') -> str:
         return ssh_cmd_output(self._client, "df -h " + mount_point + " | tail -n1 | awk '{print $4 \" / \" $2}'")
     
-    def get_uptime(self):
+    def get_uptime(self) -> str:
         return format_uptime(ssh_cmd_output(self._client, 'uptime'))
 
-    def get_battery_info(self):
+    def get_battery_info(self) -> Tuple[str, str, str]:
         capacity = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/capacity"))
         health = ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/health")
         temp = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/temp"))/10
@@ -148,16 +151,16 @@ class RAConnection(object):
         return load_remote_filesystem(self._client)
 
     def render_document_by_uuid(self, uuid: str, output_filename: str,
-                        progress_cb: Callable[[float], None], **kwargs):
+                        progress_cb: Callable[[float], None], **kwargs) -> None:
         _, _, dirents = load_remote_filesystem(self._client)
-        return self.render_document(dirents[uuid], output_filename, progress_cb, **kwargs)
+        self.render_document(dirents[uuid], output_filename, progress_cb, **kwargs)
 
     def render_document(self, rm_file: RDocument, output_filename: str,
-                        progress_cb: Callable[[float], None], **kwargs):
+                        progress_cb: Callable[[float], None], **kwargs) -> None:
         """kwargs will be passed to rmrl.render()"""
         render_remote(self._client, rm_file, output_filename, progress_cb, **kwargs)
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         # Returns True if the client is still connected and the session is
         # still active (see comment to https://stackoverflow.com/a/33383984)
         if self._client is not None:
@@ -171,7 +174,7 @@ class RAConnection(object):
                 pass
         return False
 
-    def _check_key(self):
+    def _check_key(self) -> paramiko.RSAKey:
         if self._cfg['keyfile'] is None:
             return None
         try:

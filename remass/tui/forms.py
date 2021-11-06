@@ -159,11 +159,9 @@ class ExportForm(nps.ActionFormMinimal):
         self.rendering_png = self.add(nps.RoundCheckBox, name='Convert to PNG', value=False, relx=4)
         self.rendering_dpi = self.add(nps.TitleText, name="Image Quality (DPI)", value='300', relx=4, begin_entry_at=24)
         add_empty_row(self)
-        add_empty_row(self)
         self.btn_start = self.add(nps.ButtonPress, name='[Start Export]', relx=3,
                                   when_pressed_function=self._start_export)
-        add_empty_row(self)
-        self.btn_open_folder = self.add(nps.ButtonPress, name='[Open Folder]', relx=3,
+        self.btn_open_folder = self.add(nps.ButtonPress, name='[Open Output Folder]', relx=3,
                                         when_pressed_function=self._open_folder)
         self.btn_open_pdf = self.add(nps.ButtonPress, name='[Open PDF]', relx=3,
                                      when_pressed_function=self._open_pdf)
@@ -174,6 +172,7 @@ class ExportForm(nps.ActionFormMinimal):
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
                                      step=1, out_of=100, label=True, value=0,
                                      max_height=3)
+        self._toggle_widgets(True)
 
     def _on_remote_file_selected(self):
         if self.auto_replace_local_filename:
@@ -185,10 +184,12 @@ class ExportForm(nps.ActionFormMinimal):
                 self.select_local.value = fn
                 self.prev_auto_replaced_filename = fn
             self.select_local.display()
+            self._toggle_open_pdf()
 
     def _on_local_file_selected(self):
         if self.select_local.value is not None and self.select_local.value != self.prev_auto_replaced_filename:
             self.auto_replace_local_filename = False
+        self._toggle_open_pdf()
 
     def _start_export(self, *args, **kwargs):
         if self.is_exporting:
@@ -198,7 +199,7 @@ class ExportForm(nps.ActionFormMinimal):
             nps.notify_confirm("You must select a notebook to export!",
                                title='Error', form_color='CAUTION', editw=1)
             return False
-        if self.select_local.value is None:
+        if self.select_local.filename is None:
             nps.notify_confirm("You must select an output file!",
                                title='Error', form_color='CAUTION', editw=1)
             return False
@@ -213,12 +214,12 @@ class ExportForm(nps.ActionFormMinimal):
         self.is_exporting = True
         self.export_thread = threading.Thread(target=self._export_blocking,
                                               args=(self.select_tablet.value, 
-                                                    os.path.expanduser(self.select_local.value,)))
+                                                    self.select_local.filename,))
         self.export_thread.start()
         return True
 
     def _open_pdf(self, *args, **kwargs):
-        fname = os.path.expanduser(self.select_local.value)
+        fname = self.select_local.filename
         if fname is None or not os.path.exists(fname):
             nps.notify_confirm('Nothing exported so far.', title='Error',
                                form_color='CAUTION', editw=1)
@@ -233,7 +234,7 @@ class ExportForm(nps.ActionFormMinimal):
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def _open_folder(self, *args, **kwargs):
-        folder = os.path.dirname(os.path.expanduser(self.select_local.value))
+        folder = os.path.dirname(self.select_local.filename)
         if folder is None or not os.path.exists(folder):
             return
         else:
@@ -244,30 +245,43 @@ class ExportForm(nps.ActionFormMinimal):
             else:
                 subprocess.Popen(["xdg-open", folder])
 
+    def _toggle_open_pdf(self, editable=True):
+        self.btn_open_pdf.editable = editable and \
+            (self.select_local.filename is not None and
+             os.path.exists(self.select_local.filename))
+        self.btn_open_pdf.display()
+
     def _toggle_widgets(self, editable):
-        # self.rendering_only_annotated.editable = editable
-        # self.rendering_only_annotated.display()
-        self.rendering_expand_pages.editable = editable
-        self.rendering_expand_pages.display()
-        self.rendering_template_alpha.editable = editable
-        self.rendering_template_alpha.display()
-        self.rendering_dpi.editable = editable
-        self.rendering_dpi.display()
-        self.rendering_png.editable = editable
-        self.rendering_png.display()
+        # File selection widgets
         self.select_tablet.editable = editable
         self.select_tablet.display()
         self.select_local.editable = editable
         self.select_local.display()
+        # Rendering option widgets
+        self.rendering_pages.editable = editable
+        self.rendering_pages.display()
+        self.rendering_template_alpha.editable = editable
+        self.rendering_template_alpha.display()
+        self.rendering_expand_pages.editable = editable
+        self.rendering_expand_pages.display()
+        # self.rendering_only_annotated.editable = editable
+        # self.rendering_only_annotated.display()
+        self.rendering_png.editable = editable
+        self.rendering_png.display()
+        self.rendering_dpi.editable = editable
+        self.rendering_dpi.display()
+        # Buttons
         self.btn_start.editable = editable
         self.btn_start.display()
-        self.btn_open_pdf.editable = editable
-        self.btn_open_pdf.display()
         self.btn_open_folder.editable = editable
         self.btn_open_folder.display()
-        self._added_buttons['ok_button'].editable = editable
-        self._added_buttons['ok_button'].display()
-    
+        self._toggle_open_pdf(editable)
+        # The form button will only be added (and removed) within the
+        # base class' edit() method
+        if hasattr(self, '_added_buttons'):
+            self._added_buttons['ok_button'].editable = editable
+            self._added_buttons['ok_button'].display()
+
     def _export_blocking(self, rm_file, output_filename):
         self._connection.render_document(rm_file, output_filename,
                                          self._rendering_progress_callback,
@@ -343,7 +357,8 @@ class MainForm(nps.ActionFormMinimal):
     def update_device_info(self):
         if self._connection.is_connected():
             max_text_width = 22
-            self._info_lbl.value = 'Connected to device:'
+            hostname = self._connection.get_hostname()
+            self._info_lbl.value = f"Connected to '{hostname}':"
             self._tablet_model.value = self._connection.get_tablet_model().rjust(max_text_width)
             self._tablet_fwver.value = self._connection.get_firmware_version().rjust(max_text_width)
             self._tablet_free_space_root.value = self._connection.get_free_space('/').rjust(max_text_width)

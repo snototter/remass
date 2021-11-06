@@ -1,6 +1,7 @@
 import curses
-from typing import Tuple
 import npyscreen as nps
+import os
+from typing import Tuple
 from ..config import abbreviate_user
 
 
@@ -58,10 +59,20 @@ class CustomFilenameCombo(nps.FilenameCombo):
         else:
             self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width)
 
+    @property
+    def filename(self):
+        if self.value is None:
+            return None
+        else:
+            return os.path.expanduser(self.value)
+
 
 class TitleCustomFilenameCombo(nps.TitleCombo):
     _entry_type = CustomFilenameCombo
 
+    @property
+    def filename(self):
+        return self.entry_widget.filename
 
 
 def _parse_range_token(token: str) -> Tuple[int, int]:
