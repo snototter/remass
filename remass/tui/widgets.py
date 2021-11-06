@@ -1,6 +1,7 @@
 import curses
 import npyscreen as nps
 import os
+import re
 from typing import Tuple
 from ..config import abbreviate_user
 
@@ -87,9 +88,11 @@ def _parse_range_token(token: str) -> Tuple[int, int]:
         if token == '*' or token == '-':
             return (1, -1)
         elif '-' in token:
-            parts = [p.strip() for p in token.split('-')]
-            return (int(parts[0]) if len(parts[0]) > 0 else 1,
-                    int(parts[1]) if len(parts[1]) > 0 else -1)
+            match = re.match(r"([-+]?\d+)?-([-+]?\d+)?", token)
+            if match is None:
+                return None
+            return (int(match[1]) if match[1] is not None else 1,
+                    int(match[2]) if match[2] is not None else -1)
         else:
             return (int(token), int(token))
     except:
