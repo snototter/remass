@@ -25,6 +25,7 @@ setuptools.setup(
         'dataclasses',
         'npyscreen',
         'paramiko',
+        'pdf2image',
         'pdfrw>=0.4',
         'reportlab>=3.5.59',
         'svglib>=1.0.1',

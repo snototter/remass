@@ -4,6 +4,8 @@ import curses
 import paramiko
 import socket
 import threading
+from pdf2image import convert_from_path
+from pdf2image.generators import counter_generator
 import platform
 import subprocess
 
@@ -144,7 +146,6 @@ class ExportForm(nps.ActionFormMinimal):
                                       rm_dirents=self.fs_dirents, select_dir=False, relx=4,
                                       begin_entry_at=24)
         self.select_local = self.add(TitleCustomFilenameCombo, name="Output PDF",
-                                    #  value='exported-notebook.pdf', select_dir=False,
                                      when_value_edited_cb=self._on_local_file_selected,
                                      value=None, select_dir=False,
                                      label=True, must_exist=False, relx=4,
@@ -155,16 +156,20 @@ class ExportForm(nps.ActionFormMinimal):
         self.rendering_template_alpha = self.add(TitleAlphaSlider, name='Template Alpha', value=3, begin_entry_at=24, relx=4)
         self.rendering_expand_pages = self.add(nps.RoundCheckBox, name='Expand Pages to rM View', value=True, relx=4)
         # self.rendering_only_annotated = self.add(nps.RoundCheckBox, name='Only Annotated Pages', value=False, relx=4)
+        self.rendering_png = self.add(nps.RoundCheckBox, name='Convert to PNG', value=False, relx=4)
+        self.rendering_dpi = self.add(nps.TitleText, name="Image Quality (DPI)", value='300', relx=4, begin_entry_at=24)
         add_empty_row(self)
         add_empty_row(self)
-        self.btn_start = self.add(nps.ButtonPress, name='[Start PDF Export]', relx=3,
+        self.btn_start = self.add(nps.ButtonPress, name='[Start Export]', relx=3,
                                   when_pressed_function=self._start_export)
         add_empty_row(self)
-        self.btn_open = self.add(nps.ButtonPress, name='[Open PDF]', relx=3,
-                                 when_pressed_function=self._open_pdf)
+        self.btn_open_folder = self.add(nps.ButtonPress, name='[Open Folder]', relx=3,
+                                        when_pressed_function=self._open_folder)
+        self.btn_open_pdf = self.add(nps.ButtonPress, name='[Open PDF]', relx=3,
+                                     when_pressed_function=self._open_pdf)
         add_empty_row(self)
         screen_height, _ = self.widget_useable_space()  # This does NOT include the already created widgets!
-        for i in range(screen_height - 20):
+        for i in range(screen_height - 23):
             add_empty_row(self)
         self.progress_bar = self.add(ProgressBarBox, name='Export Progress', lowest=0,
                                      step=1, out_of=100, label=True, value=0,
@@ -215,16 +220,29 @@ class ExportForm(nps.ActionFormMinimal):
     def _open_pdf(self, *args, **kwargs):
         fname = os.path.expanduser(self.select_local.value)
         if fname is None or not os.path.exists(fname):
-            nps.notify_confirm('Nothing exported so far.', title='Error', form_color='CAUTION', editw=1)
+            nps.notify_confirm('Nothing exported so far.', title='Error',
+                               form_color='CAUTION', editw=1)
         else:
-            if platform.system() == 'Darwin':  # macOS
+            if platform.system() == 'Darwin':
                 subprocess.call(('open', fname),
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            elif platform.system() == 'Windows':  # Windows
+            elif platform.system() == 'Windows':
                 os.startfile(fname)
-            else:  # Linux
+            else:
                 subprocess.call(('xdg-open', fname),
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def _open_folder(self, *args, **kwargs):
+        folder = os.path.dirname(os.path.expanduser(self.select_local.value))
+        if folder is None or not os.path.exists(folder):
+            return
+        else:
+            if platform.system() == "Darwin":
+                subprocess.Popen(["open", folder])
+            if platform.system() == "Windows":
+                os.startfile(folder)
+            else:
+                subprocess.Popen(["xdg-open", folder])
 
     def _toggle_widgets(self, editable):
         # self.rendering_only_annotated.editable = editable
@@ -233,14 +251,20 @@ class ExportForm(nps.ActionFormMinimal):
         self.rendering_expand_pages.display()
         self.rendering_template_alpha.editable = editable
         self.rendering_template_alpha.display()
+        self.rendering_dpi.editable = editable
+        self.rendering_dpi.display()
+        self.rendering_png.editable = editable
+        self.rendering_png.display()
         self.select_tablet.editable = editable
         self.select_tablet.display()
         self.select_local.editable = editable
         self.select_local.display()
         self.btn_start.editable = editable
         self.btn_start.display()
-        self.btn_open.editable = editable
-        self.btn_open.display()
+        self.btn_open_pdf.editable = editable
+        self.btn_open_pdf.display()
+        self.btn_open_folder.editable = editable
+        self.btn_open_folder.display()
         self._added_buttons['ok_button'].editable = editable
         self._added_buttons['ok_button'].display()
     
@@ -252,13 +276,28 @@ class ExportForm(nps.ActionFormMinimal):
                                         #  only_annotated=self.rendering_only_annotated.value
                                          page_selection=self.rendering_pages.pages
                                          )
+        if self.rendering_png.value:
+            output_folder = os.path.dirname(output_filename)
+            notification_suffix = '\n------------------------------------------\n'\
+                                  f"\nPNGs have been exported to\n"\
+                                  f"  '{abbreviate_user(output_folder)}'"
+            fname = os.path.splitext(os.path.basename(output_filename))[0]
+            dpi = int(self.rendering_dpi.value)
+            fmt = 'png'
+            _ = convert_from_path(output_filename, output_folder=output_folder,
+                                  dpi=dpi, fmt=fmt, paths_only=True,
+                                  single_file=False, thread_count=4,
+                                  output_file=counter_generator(fname + '-', padding_goal=4))
+        else:
+            notification_suffix = ''
         self.is_exporting = False
         # Re-enable all widgets & notify the user (as we blocked all user 
         # inputs, this works from within this export thread, too)
         self._toggle_widgets(True)
         nps.notify(f"Successfully exported\n  '{rm_file.hierarchy_name}'\nto\n"
-                   f"  '{output_filename}", title='Info', form_color='STANDOUT')
-        curses.napms(1500)
+                   f"  '{abbreviate_user(output_filename)}'{notification_suffix}",
+                   title='Info', form_color='STANDOUT')
+        curses.napms(3000)
         curses.flushinp()
         self.display(clear=True)
 

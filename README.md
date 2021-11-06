@@ -7,7 +7,7 @@ I release this utility in the hope that it is helpful to others, but I can make 
 There might be bugs, you may lose data, your device may crash, etc.
 
 ## Demo
-TODO Screenshots
+TODO show screenshots
 
 ## Setup
 #### System Prerequisites:
@@ -19,7 +19,7 @@ TODO Screenshots
    Refer to the [install instruction](https://pypi.org/project/pdf2image/) of `pdf2image` (on most Linux distributions, you just need to `sudo apt install poppler-utils`)
 
 #### Install reMass
-TODO
+TODO doc venv setup (local + via github)
 
 #### Post-Install Steps
 rmrl load templates
