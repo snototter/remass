@@ -9,7 +9,7 @@ from pdf2image.generators import counter_generator
 import platform
 import subprocess
 
-from remass.tui.utilities import add_empty_row, full_class_name, safe_filename
+from .utilities import add_empty_row, full_class_name, safe_filename, open_with_default_application
 
 from .widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleCustomPassword, TitleAlphaSlider, TitlePageRange
 from .fileselect import TitleRFilenameCombo
@@ -185,12 +185,12 @@ class ExportForm(nps.ActionFormMinimal):
                 self.select_local.value = fn
                 self.prev_auto_replaced_filename = fn
             self.select_local.display()
-            self._toggle_open_pdf()
+            self._toggle_open_buttons()
 
     def _on_local_file_selected(self):
         if self.select_local.value is not None and self.select_local.value != self.prev_auto_replaced_filename:
             self.auto_replace_local_filename = False
-        self._toggle_open_pdf()
+        self._toggle_open_buttons()
 
     def _start_export(self, *args, **kwargs):
         if self.is_exporting:
@@ -225,31 +225,27 @@ class ExportForm(nps.ActionFormMinimal):
             nps.notify_confirm('Nothing exported so far.', title='Error',
                                form_color='CAUTION', editw=1)
         else:
-            if platform.system() == 'Darwin':
-                subprocess.call(('open', fname),
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            elif platform.system() == 'Windows':
-                os.startfile(fname)
-            else:
-                subprocess.call(('xdg-open', fname),
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            open_with_default_application(fname)
 
     def _open_folder(self, *args, **kwargs):
         folder = os.path.dirname(self.select_local.filename)
         if folder is None or not os.path.exists(folder):
             return
         else:
-            if platform.system() == "Darwin":
-                subprocess.Popen(["open", folder])
-            if platform.system() == "Windows":
-                os.startfile(folder)
-            else:
-                subprocess.Popen(["xdg-open", folder])
+            open_with_default_application(folder)
 
-    def _toggle_open_pdf(self, editable=True):
-        self.btn_open_pdf.editable = editable and \
-            (self.select_local.filename is not None and
-             os.path.exists(self.select_local.filename))
+    def _toggle_open_buttons(self, editable=True):
+        file_nonexisting = self.select_local.filename is None or\
+                           not os.path.exists(self.select_local.filename)
+        folder_nonexisting = self.select_local.filename is None or\
+                             not os.path.exists(os.path.dirname(self.select_local.filename))
+                          
+        self.btn_open_folder.editable = editable
+        self.btn_open_folder.hidden = folder_nonexisting
+        self.btn_open_folder.display()
+
+        self.btn_open_pdf.editable = editable
+        self.btn_open_pdf.hidden = file_nonexisting
         self.btn_open_pdf.display()
 
     def _toggle_widgets(self, editable):
@@ -274,9 +270,7 @@ class ExportForm(nps.ActionFormMinimal):
         # Buttons
         self.btn_start.editable = editable
         self.btn_start.display()
-        self.btn_open_folder.editable = editable
-        self.btn_open_folder.display()
-        self._toggle_open_pdf(editable)
+        self._toggle_open_buttons(editable)
         # The form button will only be added (and removed) within the
         # base class' edit() method
         if hasattr(self, '_added_buttons'):

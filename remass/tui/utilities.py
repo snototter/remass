@@ -1,5 +1,8 @@
 import npyscreen as nps
 import platform
+import os
+import subprocess
+
 
 ###############################################################################
 # TUI Utilities
@@ -47,3 +50,20 @@ def safe_filename(fname: str) -> str:
         if fname[-1] == '.':
             return fname[:-1]
     return fname
+
+
+def open_with_default_application(filename: str) -> None:
+    if platform.system() == 'Darwin':
+        subprocess.call(('open', filename),
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    elif platform.system() == 'Windows':
+        os.startfile(filename)
+    else:
+        subprocess.call(('xdg-open', filename),
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+# if platform.system() == "Darwin":
+#     subprocess.Popen(["open", folder])
+# if platform.system() == "Windows":
+#     os.startfile(folder)
+# else:
+#     subprocess.Popen(["xdg-open", folder])
