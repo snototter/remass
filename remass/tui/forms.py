@@ -397,10 +397,10 @@ class MainForm(nps.ActionFormMinimal):
         self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
                  when_pressed_function=self._switch_form_export)
         add_empty_row(self)   
-        self.add(nps.ButtonPress, name='[Manage Templates] (not yet available)', relx=3,  # TODO Templates
+        self.add(nps.ButtonPress, name='[Manage Templates]', relx=3, editable=False,  # TODO Templates
                  when_pressed_function=self._switch_form_templates)
         add_empty_row(self)
-        self.add(nps.ButtonPress, name='[Change Screens] (not yet available)', relx=3,  # TODO Screens
+        self.add(nps.ButtonPress, name='[Change Screens]', relx=3, editable=False, # TODO Screens
                  when_pressed_function=self._switch_form_screens)
 
     def exit_application(self, *args, **kwargs):

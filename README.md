@@ -9,6 +9,12 @@ There might be bugs, you may lose data, your device may crash, etc.
 ## Demo
 TODO show screenshots
 
+![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
+
+![Main form](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main form")
+
+![Export form](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export form")
+
 ## Setup
 #### System Prerequisites:
 * `reMass` uses [`rmrl`](https://github.com/rschroll/rmrl) to render reMarkable documents as PDF, which requires Python 3.7 or later.  
