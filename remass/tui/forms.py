@@ -357,8 +357,8 @@ class MainForm(nps.ActionFormMinimal):
             self._info_lbl.value = f"Connected to '{hostname}':"
             self._tablet_model.value = self._connection.get_tablet_model().rjust(max_text_width)
             self._tablet_fwver.value = self._connection.get_firmware_version().rjust(max_text_width)
-            self._tablet_free_space_root.value = self._connection.get_free_space('/').rjust(max_text_width)
-            self._tablet_free_space_home.value = self._connection.get_free_space('/home').rjust(max_text_width)
+            self._tablet_free_space_root.value = self._connection.get_free_space_str('/').rjust(max_text_width)
+            self._tablet_free_space_home.value = self._connection.get_free_space_str('/home').rjust(max_text_width)
             self._tablet_uptime.value = self._connection.get_uptime().rjust(max_text_width)
             bcap, bhealth, btemp = self._connection.get_battery_info()
             self._tablet_battery_info.value = f'{bcap} ({bhealth}), {btemp}'.rjust(max_text_width)

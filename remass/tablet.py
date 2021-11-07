@@ -9,6 +9,10 @@ from getpass import getpass
 from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesystem, render_remote
 
 
+class NotEnoughDiskSpaceError(Exception):
+    pass
+
+
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
                      seconds: int = 0) -> str:
     """Returns a simplified string representation of the given timedelta."""
@@ -135,9 +139,18 @@ class RAConnection(object):
     def get_hostname(self) -> str:
         return ssh_cmd_output(self._client, "cat /etc/hostname")
 
-    def get_free_space(self, mount_point: str = '/') -> str:
-        return ssh_cmd_output(self._client, "df -h " + mount_point + " | tail -n1 | awk '{print $4 \" / \" $2}'")
-    
+    def get_free_space_str(self, location: str = '/') -> str:
+        return ssh_cmd_output(self._client, 'df -h ' + f'"{location}"' + " | tail -n1 | awk '{print $4 \" / \" $2}'")
+
+    def get_free_space_kb(self, location: str) -> int:
+        try:
+            # Use dirname on the remote (because the target file location may
+            # not exist, which would cause df to not find the corresponding
+            # mounting point)
+            return int(ssh_cmd_output(self._client, f"df $(dirname \"{location}\") | tail -n1 | awk '{{print $4}}'"))
+        except ValueError:
+            raise NotEnoughDiskSpaceError(f'Cannot determine free space for location "{location}"')
+
     def get_uptime(self) -> str:
         return format_uptime(ssh_cmd_output(self._client, 'uptime'))
 
@@ -159,6 +172,27 @@ class RAConnection(object):
                         progress_cb: Callable[[float], None], **kwargs) -> None:
         """kwargs will be passed to rmrl.render()"""
         render_remote(self._client, rm_file, output_filename, progress_cb, **kwargs)
+
+    def download_file(self, remote_filename: str, local_filename: str):
+        sftp = self._client.open_sftp()
+        sftp.get(remote_filename, local_filename)
+        sftp.close()
+
+    def upload_file(self, local_filename: str, remote_filename: str):
+        """We allow uploading only if there are is at least 1MB free space available."""
+        min_free_space = 1024  # Size in KB
+        # First, check available space (as rM's root partition is quite limited)
+        upload_bytes = os.path.getsize(local_filename)
+        free_space = self.get_free_space_kb(remote_filename)
+        if upload_bytes + min_free_space >= free_space:
+            raise NotEnoughDiskSpaceError(f'Upload of "{local_filename}" ({upload_bytes} KB) '
+                                          f'to "{remote_filename}" '
+                                          f'would lead to less than {min_free_space} KB on '
+                                          f'partition (free: {free_space} KB).')
+        # Now it's safe to upload the file
+        sftp = self._client.open_sftp()
+        sftp.put(local_filename, remote_filename)
+        sftp.close()
 
     def is_connected(self) -> bool:
         # Returns True if the client is still connected and the session is

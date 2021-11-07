@@ -274,6 +274,7 @@ def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCo
     sftp = client.open_sftp()
     dirent_list = _load_dirents_remote(sftp)
     root, trash, dirent_dict = _filesystem_from_dirents(dirent_list)
+    sftp.close()
     return root, trash, dirent_dict
 
 
@@ -351,6 +352,7 @@ def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filenam
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)
+    sftp.close()
     pdf_stream = PdfReader(render_output)
     if pdf_stream is not None:
         pdf_stream.Info = IndirectPdfDict(Title=rm_file.visible_name,
