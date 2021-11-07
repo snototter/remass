@@ -348,7 +348,6 @@ def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filenam
     """Uses the SSH connection to render the given notebook remotely."""
     #TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
     #TODO also link to the limitations of rmrl (e.g. pencil textures)
-    #TODO mixed templates doesn't seem to work (all pages show the same template - from the last page?!!!!!)
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)
