@@ -1,115 +1,20 @@
+"""PDF Export"""
 import npyscreen as nps
 import os
 import curses
-import paramiko
-import socket
 import threading
 from pdf2image import convert_from_path
 from pdf2image.generators import counter_generator
-import platform
-import subprocess
 
-from .utilities import add_empty_row, full_class_name, safe_filename, open_with_default_application
+from ..utilities import add_empty_row, safe_filename, open_with_default_application
 
-from .widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleCustomPassword, TitleAlphaSlider, TitlePageRange
-from .fileselect import TitleRFilenameCombo
-from ..tablet import RAConnection
-from ..config import RAConfig, abbreviate_user
-from ..filesystem import RDocument
+from ..widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleAlphaSlider, TitlePageRange
+from ..fileselect import TitleRFilenameCombo
+from ...tablet import RAConnection
+from ...config import RAConfig, abbreviate_user
+from ...filesystem import RDocument
 
 
-###############################################################################
-# Connection/Configuration
-###############################################################################
-class StartUpForm(nps.ActionForm):
-    OK_BUTTON_TEXT = 'Connect'
-    CANCEL_BUTTON_BR_OFFSET = (2, 20)
-    CANCEL_BUTTON_TEXT = "Cancel"
-
-    def __init__(self, config: RAConfig, *args, **kwargs):
-        self._cfg = config
-        super().__init__(*args, **kwargs)
-
-    def activate(self):
-        self.edit()
-
-    def create(self):
-        self.add_handlers({
-            "^X": self.exit_application
-        })
-        self.add(nps.Textfield, value="Options:", editable=False, color='STANDOUT')
-        self._host = self.add(nps.TitleText, name="Host", relx=4,
-                              value=self._cfg['connection']['host'])
-        self._fallback_host = self.add(nps.TitleText, name="Fallback Host", relx=4,
-                                       value=self._cfg['connection']['host_fallback'])
-        self._keyfile = self.add(TitleCustomFilenameCombo, relx=4,
-                                 name="Private Key", label=True,
-                                 value=self._cfg['connection']['keyfile'],
-                                 select_dir=False, must_exist=True)
-        self._password = self.add(TitleCustomPassword, name="Password", relx=4,
-                                  pwd_char = '*', value=self._cfg['connection']['password'])
-        add_empty_row(self)
-        self._cfg_text = self.add(nps.FixedText, value=self._get_cfg_text_label(),
-                                  editable=False, color='STANDOUT')
-        self._cfg_filename = self.add(TitleCustomFilenameCombo,
-                                      name="Path", relx=4,
-                                      value=self._cfg.config_filename, select_dir=False,
-                                      label=True, must_exist=False,
-                                      confirm_if_exists=True)
-        self.add(nps.ButtonPress, name='[Save Configuration File]', relx=3,
-                 when_pressed_function=self._save_config)
-
-        # We want to focus/highlight the ok button (which is created inside
-        # the base class' edit()). This can be done by:
-        self.preserve_selected_widget = True
-        self.editw = 10
-
-    def on_cancel(self):
-        self.exit_application()
-
-    def exit_application(self, *args, **kwargs):
-        self.parentApp.switchForm(None)  # Exits the application
-
-    def on_ok(self):
-        self._update_config()
-        self.parentApp.setNextForm('MAIN')
-
-    def _get_cfg_text_label(self):
-        tlbl = "Configuration file"
-        if self._cfg.config_filename is None or not os.path.exists(self._cfg.config_filename):
-            tlbl += ' (does not exist)'
-        tlbl += ':'
-        return tlbl
-
-    def _update_config(self):
-        self._cfg['connection']['host'] = self._host.value
-        self._cfg['connection']['keyfile'] = self._keyfile.value
-        self._cfg['connection']['password'] = self._password.value
-        self._cfg['connection']['host_fallback'] = self._fallback_host.value
-
-    def _save_config(self):
-        fname = self._cfg_filename.value
-        if fname is None:
-            nps.notify_confirm('You must select a valid configuration file path!',
-                               title='Error', form_color='CAUTION', editw=1)
-            return
-        self._update_config()
-        try:
-            self._cfg.save(fname)
-            nps.notify_confirm(f'Configuration has been saved to:\n{fname}',
-                               title='Success', editw=1)
-            self._cfg_text.value = self._get_cfg_text_label()
-            self._cfg_text.update()
-        except (PermissionError, IOError) as e:
-            nps.notify_confirm("Cannot save configuration.\n"
-                               "----------------------------------------\n"
-                               f"Exception ({full_class_name(e)}):\n{e}",
-                               title='Error', form_color='CAUTION', editw=1)
-
-
-###############################################################################
-# PDF Export
-###############################################################################
 class ExportForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
     def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
@@ -126,13 +31,6 @@ class ExportForm(nps.ActionFormMinimal):
 
     def on_ok(self):
         self._to_main()
-
-    def _to_main(self, *args, **kwargs):
-        if self.is_exporting:
-            return
-        self.parentApp.setNextForm('MAIN')
-        self.editing = False
-        self.parentApp.switchFormNow()
 
     def create(self):
         self.add_handlers({
@@ -322,126 +220,9 @@ class ExportForm(nps.ActionFormMinimal):
         self.editing = False
         self.parentApp.switchFormNow()
 
-
-###############################################################################
-# Main
-###############################################################################
-class MainForm(nps.ActionFormMinimal):
-    OK_BUTTON_TEXT = 'Exit'
-
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
-        self._cfg = cfg
-        self._connection = connection
-        super().__init__(*args, **kwargs)
-
-    def beforeEditing(self):
-        try:
-            self._connection.open()
-        except (paramiko.SSHException, socket.timeout, socket.gaierror) as e:
-            nps.notify_confirm("Cannot connect to tablet - aborting now.\n"
-                               "----------------------------------------\n"
-                               f"Exception ({full_class_name(e)}):\n{e}",
-                               title='Error', form_color='CAUTION', editw=1)
-            # self.exit_application() will be ignored when invoked from this
-            # exception handler, thus we have to quit the ugly way:
-            raise RuntimeError(f'Aborting due to connection error: {e}') from None
-        self.update_device_info()
-
-    def on_ok(self):
-        self.exit_application()
-
-    def update_device_info(self):
-        if self._connection.is_connected():
-            max_text_width = 22
-            hostname = self._connection.get_hostname()
-            self._info_lbl.value = f"Connected to '{hostname}':"
-            self._tablet_model.value = self._connection.get_tablet_model().rjust(max_text_width)
-            self._tablet_fwver.value = self._connection.get_firmware_version().rjust(max_text_width)
-            self._tablet_free_space_root.value = self._connection.get_free_space_str('/').rjust(max_text_width)
-            self._tablet_free_space_home.value = self._connection.get_free_space_str('/home').rjust(max_text_width)
-            self._tablet_uptime.value = self._connection.get_uptime().rjust(max_text_width)
-            bcap, bhealth, btemp = self._connection.get_battery_info()
-            self._tablet_battery_info.value = f'{bcap} ({bhealth}), {btemp}'.rjust(max_text_width)
-        else:
-            self._info_lbl.value = '[ERROR] Not Connected!'
-        super().display(clear=True)
-
-    def create(self):
-        self.add_handlers({
-            "^X": self.exit_application,
-            "^E": self._switch_form_export,
-            "^T": self._switch_form_templates,
-            "^S": self._switch_form_screens
-        })
-        self._info_lbl = self.add(nps.Textfield, value="", editable=False, color='STANDOUT')
-        self._tablet_model = self.add(nps.TitleFixedText, name='Model',
-                                      begin_entry_at=24, relx=4,
-                                      value="", editable=False)
-        self._tablet_fwver = self.add(nps.TitleFixedText, name="Firmware",
-                                      begin_entry_at=24, relx=4,
-                                      value="", editable=False)
-        self._tablet_free_space_root = self.add(nps.TitleFixedText, name="Free space /",
-                                                begin_entry_at=24, relx=4,
-                                                value="", editable=False)
-        self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
-                                                begin_entry_at=24, relx=4,
-                                                value="", editable=False)
-        self._tablet_battery_info = self.add(nps.TitleFixedText, name="Battery status",
-                                             value="", begin_entry_at=24,
-                                             relx=4, editable=False)
-        self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
-                                       relx=4, begin_entry_at=24, editable=False)
-        add_empty_row(self)
-        add_empty_row(self)
-        self.add(nps.Textfield, value='Tasks', editable=False, color='STANDOUT')
-        self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
-                 when_pressed_function=self._switch_form_export)
-        add_empty_row(self)   
-        self.add(nps.ButtonPress, name='[Manage Templates]', relx=3, editable=False,  # TODO Templates
-                 when_pressed_function=self._switch_form_templates)
-        add_empty_row(self)
-        self.add(nps.ButtonPress, name='[Change Screens]', relx=3, editable=False, # TODO Screens
-                 when_pressed_function=self._switch_form_screens)
-
-    def exit_application(self, *args, **kwargs):
-        self.parentApp.setNextForm(None)
+    def _to_main(self, *args, **kwargs):
+        if self.is_exporting:
+            return
+        self.parentApp.setNextForm('MAIN')
         self.editing = False
         self.parentApp.switchFormNow()
-    
-    def _switch_form_templates(self, *args, **kwargs):
-        self.parentApp.setNextForm('TEMPLATES')  # TODO Templates
-        self.editing = False
-        self.parentApp.switchFormNow()
-
-    def _switch_form_screens(self, *args, **kwargs):
-        self.parentApp.setNextForm('SCREENS')  # TODO Screens
-        self.editing = False
-        self.parentApp.switchFormNow()
-
-    def _switch_form_export(self, *args, **kwargs):
-        self.parentApp.setNextForm('EXPORT')
-        self.editing = False
-        self.parentApp.switchFormNow()
-
-
-class RATui(nps.NPSAppManaged):
-    STARTING_FORM = 'CONNECT'
-
-    def __init__(self, args):
-        self._args = args
-        self._cfg = RAConfig(args)
-        self._connection = RAConnection(self._cfg)
-        super().__init__()
-
-    def onStart(self):
-        self.addForm('CONNECT', StartUpForm, self._cfg, name='Connection Options')
-        # Since the user may change configuration parameters within 'CONNECT',
-        # the following forms should be initialized upon every invocation (to
-        # inject the up-to-date parametrization)
-        self.addFormClass('MAIN', MainForm, self._cfg, self._connection, name='reMass')
-        self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection, name='reMass: Export PDF')
-        #TODO Templates
-        #TODO Screens
-
-    def onCleanExit(self):
-        self._connection.close()
