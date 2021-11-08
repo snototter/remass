@@ -2,12 +2,11 @@ import npyscreen as nps
 import paramiko
 import socket
 
-from remass.tui.forms.screens import ScreenCustomizationForm
 from .utilities import add_empty_row, full_class_name
 
 from ..tablet import RAConnection
 from ..config import RAConfig
-from .forms import StartUpForm, ExportForm
+from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateManagementForm
 
 ###############################################################################
 # Main
@@ -83,7 +82,7 @@ class MainForm(nps.ActionFormMinimal):
         self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
                  when_pressed_function=self._switch_form_export)
         add_empty_row(self)   
-        self.add(nps.ButtonPress, name='[Manage Templates]', relx=3, editable=False,  # TODO Templates
+        self.add(nps.ButtonPress, name='[Manage Templates]', relx=3,
                  when_pressed_function=self._switch_form_templates)
         add_empty_row(self)
         self.add(nps.ButtonPress, name='[Change Screens]', relx=3,
@@ -95,7 +94,7 @@ class MainForm(nps.ActionFormMinimal):
         self.parentApp.switchFormNow()
     
     def _switch_form_templates(self, *args, **kwargs):
-        self.parentApp.setNextForm('TEMPLATES')  # TODO Templates
+        self.parentApp.setNextForm('TEMPLATES')
         self.editing = False
         self.parentApp.switchFormNow()
 
@@ -128,7 +127,8 @@ class RATui(nps.NPSAppManaged):
                           name='reMass')
         self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection,
                           name='reMass: Export PDF')
-        #TODO Templates
+        self.addFormClass('TEMPLATES', TemplateManagementForm, self._cfg, self._connection,
+                          name='reMass: Template Management')
         self.addFormClass('SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
                           name='reMass: Screen Customization')
 

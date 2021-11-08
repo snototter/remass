@@ -6,7 +6,7 @@ from ...tablet import RAConnection
 from ...config import RAConfig
 
 
-class ScreenCustomizationForm(nps.ActionFormMinimal):
+class TemplateManagementForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
     def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
         super().__init__(*args, **kwargs)
