@@ -1,10 +1,10 @@
 """Screen Customization"""
 import npyscreen as nps
 
-from ..utilities import add_empty_row, backup_filename
+from ..utilities import add_empty_row
 from ..widgets import TitleCustomFilenameCombo
 from ...tablet import RAConnection, SplashScreenUtil, NotEnoughDiskSpaceError
-from ...config import RAConfig, abbreviate_user
+from ...config import RAConfig, abbreviate_user, backup_filename
 
 
 class ScreenCustomizationForm(nps.ActionFormMinimal):

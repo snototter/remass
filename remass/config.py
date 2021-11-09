@@ -12,6 +12,19 @@ import platform
 APP_NAME = 'remass'
 
 
+def backup_filename(filename: str, backup_folder: str) -> str:
+    """Returns a non-existing filename to be used to back up the given file
+    within the backup_folder"""
+    froot, fext = os.path.splitext(filename)
+    _, fname = os.path.split(froot)
+    bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.bak')
+    cnt = 1
+    while os.path.exists(bpath):
+        bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.{cnt:d}.bak')
+        cnt += 1
+    return bpath
+
+
 def abbreviate_user(path: str):
     """Tries to abbreviate the home dir within the given path"""
     try:

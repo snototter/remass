@@ -8,6 +8,7 @@ import re
 from PIL import Image
 from getpass import getpass
 from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesystem, render_remote
+from .config import backup_filename
 from pathlib import PurePosixPath
 
 class NotEnoughDiskSpaceError(Exception):
@@ -217,6 +218,19 @@ class RAConnection(object):
     def download_file(self, remote_filename: str, local_filename: str):
         sftp = self._client.open_sftp()
         sftp.get(remote_filename, local_filename)
+        sftp.close()
+
+    def download_templates(self, dst_folder: str):
+        sftp = self._client.open_sftp()
+        # Download all SVG templates
+        rm_template_dir = '/usr/share/remarkable/templates'
+        for fname in sftp.listdir(rm_template_dir):
+            if not fname.lower().endswith('.svg'):
+                continue
+            sftp.get(str(PurePosixPath(rm_template_dir, fname)), os.path.join(dst_folder, fname))
+        # Also back up the configuration JSON
+        cfg_backup = backup_filename('templates.json', dst_folder)
+        sftp.get(str(PurePosixPath(rm_template_dir, 'templates.json')), cfg_backup)
         sftp.close()
 
     def upload_file(self, local_filename: str, remote_filename: str):

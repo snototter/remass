@@ -20,6 +20,7 @@ After setup, you can run `reMass` via `python -m remass`:
   ![Export form](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export form")
 * TODO Customizing splash screens:  
 * TODO Templates
+  * https://github.com/rschroll/rmrl#templates (our patched rmrl can be used with custom template paths, thus we can use the "load templates" button if you're allowed)
 
 ## Setup
 #### System Prerequisites:
