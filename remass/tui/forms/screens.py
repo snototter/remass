@@ -29,22 +29,38 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
                                         initial_folder=self._cfg.screen_dir, select_dir=False,
                                         label=True, must_exist=True,
                                         confirm_if_exists=False)
-        self.btn_open_pdf = self.add(nps.ButtonPress, name='[Open Image]', relx=3,
-                                     when_pressed_function=self._open_image)
+        self.add(nps.ButtonPress, name='[Validate Image]', relx=3,
+                when_pressed_function=self._validate_image)
+        self.add(nps.ButtonPress, name='[Open Image]', relx=3,
+                when_pressed_function=self._open_image)
         add_empty_row(self)
-        self.rm_screen = self.add(nps.TitleSelectOne, max_height=6,
+        self.rm_screen = self.add(nps.TitleSelectOne,
+                                  max_height = min(6, len(SplashScreenUtil.SCREENS)),
                                   value = [0,], name="Use As", relx=4,
                                   values = [s[1] for s in SplashScreenUtil.SCREENS],
                                   scroll_exit=True)
         add_empty_row(self)
         self.btn_backup = self.add(nps.ButtonPress, name='[Backup Current Screen]',
                                    relx=3, when_pressed_function=self._backup_screen)
-        add_empty_row(self)
         self.btn_start = self.add(nps.ButtonPress, name='[Upload Selected Screen]', relx=3,
                                   when_pressed_function=self._upload_screen)
-        add_empty_row(self)
         self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
+
+    def _validate_image(self, *args, confirm_success=True, **kwargs) -> bool:
+        if self.screen_filename.filename is None:
+            nps.notify_confirm("You must select an image file!",
+                               title='Error', form_color='CAUTION', editw=1)
+            return False
+        valid, valmsg = SplashScreenUtil.validate_custom_screen(self.screen_filename.filename)
+        if not valid:
+            nps.notify_confirm(f"This is not a valid splash screen:\n{valmsg}",
+                               title='Error', form_color='CAUTION', editw=1)
+            return False
+        if confirm_success:
+            nps.notify_confirm('This is a valid splash screen!', title='Info',
+                               form_color='STANDOUT', editw=1)
+        return True
 
     def _open_image(self, *args, **kwargs):
         fname = self.screen_filename.filename
@@ -64,14 +80,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
                            title='Info', form_color='STANDOUT', editw=1)
 
     def _upload_screen(self, *args, **kwargs) -> bool:
-        if self.screen_filename.filename is None:
-            nps.notify_confirm("You must select an image file!",
-                               title='Error', form_color='CAUTION', editw=1)
-            return False
-        valid, valmsg = SplashScreenUtil.validate_custom_screen(self.screen_filename.filename)
-        if not valid:
-            nps.notify_confirm(f"This is not a valid splash screen:\n{valmsg}",
-                               editw=1)
+        if not self._validate_image(confirm_success=False):
             return False
         
         screen_selection = SplashScreenUtil.SCREENS[self.rm_screen.value[0]]
