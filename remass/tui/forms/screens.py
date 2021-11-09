@@ -47,10 +47,9 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
             nps.notify_confirm("You must select an image file!",
                                title='Error', form_color='CAUTION', editw=1)
             return False
-        #TODO additional sanity checks if needed
-        if not SplashScreenUtil.validate_custom_screen(self.screen_filename.filename):
-            nps.notify_confirm("The chosen file is not a valid splash screen.\n"
-                               f"Please check the file:\n  {self.screen_filename.filename}",
+        valid, valmsg = SplashScreenUtil.validate_custom_screen(self.screen_filename.filename)
+        if not valid:
+            nps.notify_confirm(f"This is not a valid splash screen:\n{valmsg}",
                                editw=1)
             return False
         

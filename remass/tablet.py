@@ -41,17 +41,14 @@ class SplashScreenUtil(object):
     @classmethod
     def validate_custom_screen(cls, filename: str) -> bool:
         """Checks if the given image file can be used as a custom splash screen."""
-        # File must be a PNG
         if not filename.lower().endswith('.png'):
-            return False
-        # Only 8-bit PNGs are supported (I guess - why would you use other bit depths anyhow)
+            return False, 'File must be a PNG.'
         image = Image.open(filename)
         if image.mode not in ['L', 'LA', 'RGB', 'RGBA']:
-            return False
-        # Check that the resolution matches
+            return False, 'Image must be 8bit luminance/rgb (plus optional alpha).'
         if image.size != (1404, 1872):
-            return False
-        return True
+            return False, 'Resolution must be 1404x1872.'
+        return True, ''
 
 
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
