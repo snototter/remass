@@ -40,7 +40,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
         self.btn_start = self.add(nps.ButtonPress, name='[Upload Selected Screen]', relx=3,
                                   when_pressed_function=self._upload_screen)
         add_empty_row(self)
-        self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart xochitl]', relx=3,
+        self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
 
     def _backup_screen(self, *args, **kwargs):

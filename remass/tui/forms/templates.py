@@ -29,10 +29,17 @@ class TemplateManagementForm(nps.ActionFormMinimal):
                                  when_pressed_function=self._load_templates)
         add_empty_row(self)
 
+        add_empty_row(self)
+        self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
+                                      when_pressed_function=self._restart_ui)
+
     def _load_templates(self, *args, **kwargs):
         self._connection.download_templates(self._cfg.template_dir)
         nps.notify_confirm(f"Templates have been downloaded to\n{self._cfg.template_dir}",
                            title='Info', form_color='STANDOUT', editw=1)
+
+    def _restart_ui(self, *args, **kwargs):
+        self._connection.restart_ui()
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
