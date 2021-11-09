@@ -25,6 +25,7 @@ setuptools.setup(
         'dataclasses',
         'npyscreen',
         'paramiko',
+        'Pillow',
         'pdf2image',
         'pdfrw>=0.4',
         'reportlab>=3.5.59',

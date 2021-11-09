@@ -33,7 +33,8 @@ class TitleCustomPassword(nps.TitleText):
 
 class CustomFilenameCombo(nps.FilenameCombo):
     """Customizes the filename display of the default FilenameCombo"""
-    def __init__(self, screen, *args, when_value_edited_cb=None, **kwargs):
+    def __init__(self, screen, *args, when_value_edited_cb=None, initial_folder=None, **kwargs):
+        self.initial_folder = initial_folder
         super().__init__(screen, *args, **kwargs)
         self.when_value_edited_cb = when_value_edited_cb
         # self.add_handlers({
@@ -59,6 +60,18 @@ class CustomFilenameCombo(nps.FilenameCombo):
             self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width, self.parent.theme_manager.findPair(self))
         else:
             self.parent.curses_pad.addnstr(self.rely, self.relx, printme, self.width)
+
+    def h_change_value(self, *args, **keywords): # override
+        self.value = nps.selectFile(
+            starting_value = self.initial_folder if self.value is None or self.value == '' else self.value,
+            select_dir = self.select_dir,
+            must_exist = self.must_exist,
+            confirm_if_exists = self.confirm_if_exists,
+            sort_by_extension = self.sort_by_extension
+        )
+        if self.value == '':
+            self.value = None
+        self.display()
 
     @property
     def filename(self):

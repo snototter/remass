@@ -2,16 +2,17 @@
 import npyscreen as nps
 
 from ..utilities import add_empty_row
-from ...tablet import RAConnection
+from ..widgets import TitleCustomFilenameCombo
+from ...tablet import RAConnection, SplashScreenUtil, NotEnoughDiskSpaceError
 from ...config import RAConfig
 
 
 class ScreenCustomizationForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
     def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self._cfg = cfg
         self._connection = connection
+        super().__init__(*args, **kwargs)
 
     def on_ok(self):
         self._to_main()
@@ -21,7 +22,52 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
             "^X": self.exit_application,
             "^B": self._to_main
         })
-        self.add(nps.Textfield, value="TODO:", editable=False, color='STANDOUT')
+        # self.add(nps.Textfield, value="Select Image:", editable=False, color='STANDOUT')
+        self.screen_filename = self.add(TitleCustomFilenameCombo,
+                                        name="Image File", relx=4,
+                                        initial_folder=self._cfg.screen_dir, select_dir=False,
+                                        label=True, must_exist=True,
+                                        confirm_if_exists=False)
+        add_empty_row(self)
+        self.rm_screen = self.add(nps.TitleSelectOne, max_height=6,
+                                  value = [0,], name="Use As", relx=4,
+                                  values = [s[1] for s in SplashScreenUtil.SCREENS],
+                                  scroll_exit=True)
+        add_empty_row(self)
+        #TODO store backup locally (checkbox)
+        self.btn_start = self.add(nps.ButtonPress, name='[Synchronize]', relx=3,
+                                  when_pressed_function=self._synchronize_screen)
+        add_empty_row(self)
+        self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart xochitl]', relx=3,
+                                      when_pressed_function=self._restart_ui)  
+        # TODO reload UI
+
+    def _synchronize_screen(self, *args, **kwargs) -> bool:
+        if self.screen_filename.filename is None:
+            nps.notify_confirm("You must select an image file!",
+                               title='Error', form_color='CAUTION', editw=1)
+            return False
+        #TODO additional sanity checks if needed
+        if not SplashScreenUtil.validate_custom_screen(self.screen_filename.filename):
+            nps.notify_confirm("The chosen file is not a valid splash screen.\n"
+                               f"Please check the file:\n  {self.screen_filename.filename}",
+                               editw=1)
+            return False
+        
+        screen_selection = SplashScreenUtil.SCREENS[self.rm_screen.value[0]]
+        remote_file = SplashScreenUtil.tablet_filename(screen_selection)
+        try:
+            self._connection.upload_file(self.screen_filename.filename, remote_file)
+            nps.notify_wait(f"'{screen_selection[1]}' screen has been sucessfully uploaded.\n"
+                            "Please restart the UI/reboot the table to use it.",
+                            title='Info', form_color='STANDOUT')
+        except NotEnoughDiskSpaceError as e:
+            nps.notify_confirm("Not enough disk space on tablet.\n"
+                               f"----------------------------------------\n{e}",
+                               title='Error', form_color='CAUTION', editw=1)
+
+    def _restart_ui(self, *args, **kwargs):
+        self._connection.restart_ui()
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)

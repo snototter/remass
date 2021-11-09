@@ -1,16 +1,57 @@
 """Handles connection & device queries."""
 import logging
 import os
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, Tuple, Union
 import paramiko
 import socket
 import re
+from PIL import Image
 from getpass import getpass
 from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesystem, render_remote
-
+from pathlib import PurePosixPath
 
 class NotEnoughDiskSpaceError(Exception):
     pass
+
+
+class SplashScreenUtil(object):
+    # Replacing the splash (dat/bmp - dat/png since at least 2.10 as it seems?) is
+    # not supported yet (and I don't plan to change this any time soon)
+    SCREENS = (
+        # ('batteryempty.png', 'Battery empty'),
+        # ('lowbattery.png', 'Battery low'),
+        # ('factory.png', 'Factory'),
+        # ('overheating.png', 'Overheating'),
+        ('suspended.png', 'Suspended'),
+        ('starting.png',  'Starting'),
+        ('rebooting.png', 'Rebooting'),
+        ('poweroff.png',  'Powered Off'),
+    )
+
+    RM_SCREEN_PATH = '/usr/share/remarkable/'
+
+    @classmethod
+    def tablet_filename(cls, screen: Union[Tuple[str, str], str]):
+        if isinstance(screen, str):
+            return str(PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen))
+        else:
+            return str(PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen[0]))
+
+
+    @classmethod
+    def validate_custom_screen(cls, filename: str) -> bool:
+        """Checks if the given image file can be used as a custom splash screen."""
+        # File must be a PNG
+        if not filename.lower().endswith('.png'):
+            return False
+        # Only 8-bit PNGs are supported (I guess - why would you use other bit depths anyhow)
+        image = Image.open(filename)
+        if image.mode not in ['L', 'LA', 'RGB', 'RGBA']:
+            return False
+        # Check that the resolution matches
+        if image.size != (1404, 1872):
+            return False
+        return True
 
 
 def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
@@ -110,6 +151,9 @@ class RAConnection(object):
     def close(self) -> None:
         if self._client is not None:
             self._client.close()
+
+    def restart_ui(self) -> None:
+        ssh_cmd_output(self._client, 'systemctl restart xochitl')
     
     def get_tablet_model(self) -> str:
         return ssh_cmd_output(self._client, "cat /sys/devices/soc0/machine")
@@ -182,7 +226,7 @@ class RAConnection(object):
         """We allow uploading only if there are is at least 1MB free space available."""
         min_free_space = 1024  # Size in KB
         # First, check available space (as rM's root partition is quite limited)
-        upload_bytes = os.path.getsize(local_filename)
+        upload_bytes = os.path.getsize(local_filename) / 1024  # in KB
         free_space = self.get_free_space_kb(remote_filename)
         if upload_bytes + min_free_space >= free_space:
             raise NotEnoughDiskSpaceError(f'Upload of "{local_filename}" ({upload_bytes} KB) '

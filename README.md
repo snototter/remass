@@ -28,7 +28,11 @@ TODO show screenshots
 TODO doc venv setup (local + via github)
 
 #### Post-Install Steps
-rmrl load templates
+* TODO doc
+  * rmrl load templates
+  * cp screens to appdir/screens
+  * cp templates to appdir/templates (or use submodule/retweaks repo)
+
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:

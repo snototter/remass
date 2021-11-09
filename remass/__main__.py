@@ -16,7 +16,14 @@ def parse_args():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARNING)
     args = parse_args()
+    # from .tablet import SplashScreenUtil
+    # print(SplashScreenUtil.tablet_filename('foo'))
+    # print(SplashScreenUtil.tablet_filename(('frobnaten', 'bar')))
     RATui(args).run()
+
+    # from .tablet import validate_custom_screen
+    # print(validate_custom_screen('test-std.png'))
+    # print(validate_custom_screen('test-alpha.png'))
 
     # cfg = RAConfig(args)
     # connection = RAConnection(cfg)
