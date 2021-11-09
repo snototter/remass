@@ -1,5 +1,5 @@
 # reMarkable Assistant
-A curses-based TUI enabling customization (screens &amp; templates) and export (PDF &amp; PNG) for reMarkable e-ink tablets.
+A text-based user interface enabling customization (screens &amp; templates) and export (PDF &amp; PNG) for reMarkable e-ink tablets.
 
 ## Disclaimer
 This is not an official reMarkable product, and I am not affiliated with reMarkable AS in any way.  
