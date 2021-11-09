@@ -22,6 +22,12 @@ class TemplateManagementForm(nps.ActionFormMinimal):
             "^B": self._to_main
         })
         self.add(nps.Textfield, value="TODO:", editable=False, color='STANDOUT')
+        self.btn_load = self.add(nps.ButtonPress, name='[Load Templates]', relx=3,
+                                 when_pressed_function=self._load_templates)
+
+    def _load_templates(self, *args, **kwargs):
+        #TODO load templates
+        pass
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)

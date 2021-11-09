@@ -182,7 +182,8 @@ class ExportForm(nps.ActionFormMinimal):
                                          template_alpha=self.rendering_template_alpha.alpha,
                                          expand_pages=self.rendering_expand_pages.value,
                                         #  only_annotated=self.rendering_only_annotated.value
-                                         page_selection=self.rendering_pages.pages
+                                         page_selection=self.rendering_pages.pages,
+                                         template_path=self._cfg.template_dir
                                          )
         if self.rendering_png.value:
             output_folder = os.path.dirname(output_filename)
