@@ -1,4 +1,4 @@
-# reMarkable Assistant
+# remAss
 A text-based user interface enabling customization (screens &amp; templates) and export (PDF &amp; PNG) for reMarkable e-ink tablets.
 
 ## Disclaimer
