@@ -40,7 +40,8 @@ def setup_app_dir(folder: str) -> str:
     subfolders = [
         os.path.join(folder, 'exports'),
         os.path.join(folder, 'templates'),
-        os.path.join(folder, 'screens')]
+        os.path.join(folder, 'screens'),
+        os.path.join(folder, 'screens', 'backups')]
     for sf in subfolders:
         if not os.path.exists(sf):
             os.makedirs(sf)
@@ -113,6 +114,10 @@ class RAConfig(object):
     @property
     def screen_dir(self):
         return os.path.join(self.app_dir, 'screens')
+
+    @property
+    def screen_backup_dir(self):
+        return os.path.join(self.screen_dir, 'backups')
 
     def load(self, filename: str = None) -> None:
         dname, fname = config_filename(filename)

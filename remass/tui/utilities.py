@@ -1,12 +1,23 @@
+"""TUI Utilities"""
 import npyscreen as nps
 import platform
 import os
 import subprocess
 
 
-###############################################################################
-# TUI Utilities
-###############################################################################
+def backup_filename(filename: str, backup_folder: str) -> str:
+    """Returns a non-existing filename to be used to back up the given file
+    within the backup_folder"""
+    froot, fext = os.path.splitext(filename)
+    _, fname = os.path.split(froot)
+    bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.bak')
+    cnt = 1
+    while os.path.exists(bpath):
+        bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.{cnt:d}.bak')
+        cnt += 1
+    return bpath
+
+
 def add_empty_row(form: nps.Form) -> None:
     """Adds an empty row to the given form."""
     form.add(nps.FixedText, value='', hidden=True)
@@ -53,6 +64,7 @@ def safe_filename(fname: str) -> str:
 
 
 def open_with_default_application(filename: str) -> None:
+    """Opens the given file/folder with the system's default application."""
     if platform.system() == 'Darwin':
         subprocess.call(('open', filename),
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
