@@ -11,13 +11,14 @@ I release this utility in the hope that it is helpful to others, but I can make 
 There might be bugs, you may lose data, your device may crash, etc.
 
 ## TUI Demo
-* Start-up screen (provides SSH connection options)
+After setup, you can run `reMass` via `python -m remass`:
+* Start-up screen (provides SSH connection options)  
   ![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
-* Main application screen showing device status information:
+* Main application screen showing device status information:  
   ![Main form](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main form")
-* PDF/PNG export screen:
+* PDF/PNG export screen:  
   ![Export form](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export form")
-* TODO Customizing splash screens:
+* TODO Customizing splash screens:  
 * TODO Templates
 
 ## Setup
@@ -42,6 +43,16 @@ TODO doc venv setup (local + via github)
   * cp screens to appdir/screens
   * cp templates to appdir/templates (or use submodule/retweaks repo)
 
+#### Configuration
+```python
+'host': '10.11.99.1',
+'host_fallback': None,  # If connection to 'host' times out, we try to connect to 'host_fallback' if set.
+'user': 'root', # At the time of writing, there is only the root account available on the reMarkable
+'keyfile': None,  # Path to the SSH private key
+'password': None,  # If a keyfile is specified, pwd will be used to unlock it (otherwise, it will be used as the root's pwd)
+'timeout': 1,  # SSH connection timeout in seconds
+'port': 22  # If we ever need/want to adjust the connection port
+```
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
