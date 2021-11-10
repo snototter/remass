@@ -25,12 +25,11 @@ After setup, you can run `reMass` via `python -m remass`:
 
 ## Setup
 #### System Prerequisites:
-This utility should work on any Unix-like platform (as it requires `curses`). It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS).  
-_If there are prerequisites missing for your platform, please let me know._
+This utility should work on any Unix-like platform (as it requires `curses`). It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS). _If there are prerequisites missing for your platform, please let me know._
 * `reMass` uses [`rmrl`](https://github.com/rschroll/rmrl) for PDF export, which requires Python 3.7 or later.  
   * On Ubuntu 20.04, Python 3.8 is the default version (at the time of writing).  
-  * On Ubuntu 18.04, Python 3.6 is the default version, thus you have to install a newer version:  
-    ```
+  * On Ubuntu 18.04, Python 3.6 is the default version, thus you have to install a newer version:
+    ```bash
     sudo apt install python3.8 python3.8-venv
     ```
 * Since we actually rely on a patched [`rmrl`](https://github.com/snototter/rmrl) fork, you will need `git` to install this dependency automatically using `pip`.
@@ -79,7 +78,7 @@ TODO add documentation
   timeout = 1
   ```
 * **Templates:** TODO load templates for export
-* **Screens:** for ease of use, copy your custom templates to 
+* **Screens:** for ease of use, copy your custom templates to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
