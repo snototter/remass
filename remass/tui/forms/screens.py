@@ -23,7 +23,6 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
             "^X": self.exit_application,
             "^B": self._to_main
         })
-        # self.add(nps.Textfield, value="Select Image:", editable=False, color='STANDOUT')
         self.screen_filename = self.add(TitleCustomFilenameCombo,
                                         name="Image File", relx=4,
                                         initial_folder=self._cfg.screen_dir, select_dir=False,
@@ -31,7 +30,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
                                         confirm_if_exists=False)
         self.add(nps.ButtonPress, name='[Validate Image]', relx=3,
                 when_pressed_function=self._validate_image)
-        self.add(nps.ButtonPress, name='[Open Image]', relx=3,
+        self.add(nps.ButtonPress, name='[Open Image Viewer]', relx=3,
                 when_pressed_function=self._open_image)
         add_empty_row(self)
         self.rm_screen = self.add(nps.TitleSelectOne,

@@ -1,5 +1,5 @@
 # reMass
-A text-based user interface which simplifies customizing reMarkable&reg;-ink tablets (screens &amp; templates) and provides PDF &amp; PNG export functionality.  
+TUI (text-based UI) for Unix-like systems which simplifies customizing reMarkable&reg; e-ink tablets (screens &amp; templates) and provides basic PDF &amp; PNG export functionality.  
 
 Why yet another rM assistant? - because I needed a quick solution to export my notes &amp; drawings without internet connection (and I find such a rather simplistic TUI easier to use than point-and-click interfaces).
 
@@ -24,36 +24,61 @@ After setup, you can run `reMass` via `python -m remass`:
 
 ## Setup
 #### System Prerequisites:
-This utility should work on any platform (Windows, Mac &amp; Linux). However, I can only test it on Linux (Ubuntu 18.04 &amp; 20.04 LTS) and, sporadically, on Windows 10.  
+This utility should work on any Unix-like platform (as it requires `curses`). It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS).  
 _If there are prerequisites missing for your platform, please let me know._
 * `reMass` uses [`rmrl`](https://github.com/rschroll/rmrl) for PDF export, which requires Python 3.7 or later.  
   * On Ubuntu 20.04, Python 3.8 is the default version (at the time of writing).  
-  * On Ubuntu 18.04, Python 3.6 is the default version, thus you have to install a newer one manually:  
+  * On Ubuntu 18.04, Python 3.6 is the default version, thus you have to install a newer version:  
     ```
     sudo apt install python3.8 python3.8-venv
     ```
+* Since we actually rely on a patched [`rmrl`](https://github.com/snototter/rmrl) fork, you will need `git` to install this dependency automatically using `pip`.
 * `reMass` uses [`pdf2image`](https://pypi.org/project/pdf2image/) for PNG export which requires [`poppler`](https://poppler.freedesktop.org/). Please refer to the [install instruction](https://pypi.org/project/pdf2image/) of `pdf2image`  
   (_On most Linux distributions, you just need to `sudo apt install poppler-utils`_)
 
 #### Install reMass
-TODO doc venv setup (local + via github)
+The easiest way is to install `reMass` directly from github into a `virtualenv`:
+```bash
+# Set up & activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-#### Post-Install Steps
-* TODO doc
-  * rmrl load templates
-  * cp screens to appdir/screens
-  * cp templates to appdir/templates (or use submodule/retweaks repo)
+# Install reMass
+python -m pip install https://github.com/snototter/remass/tarball/master
 
-#### Configuration
-```python
-'host': '10.11.99.1',
-'host_fallback': None,  # If connection to 'host' times out, we try to connect to 'host_fallback' if set.
-'user': 'root', # At the time of writing, there is only the root account available on the reMarkable
-'keyfile': None,  # Path to the SSH private key
-'password': None,  # If a keyfile is specified, pwd will be used to unlock it (otherwise, it will be used as the root's pwd)
-'timeout': 1,  # SSH connection timeout in seconds
-'port': 22  # If we ever need/want to adjust the connection port
+# Now use it
+python -m remass
 ```
+
+#### First Steps
+TODO add documentation
+* **Paths:** by default, `reMass` uses `XDG_CONFIG_HOME/remass/` (usually `$HOME/.config/remass`) to store its configuration and `XDG_DATA_HOME/remass` (usually `$HOME/.local/share/remass`) to store data.  
+  You can change these paths via command line arguments, see the provided help:
+  ```bash
+  python -m remass -h
+  ```
+* **Configuration:** the starting screen offers all connection options. If you adjust these, you can save this configuration to disk (as TOML) to avoid re-configuration upon the next program start.  
+  Available options:  
+  ```toml
+  [connection]
+  # Default hostname/IP
+  host = "10.11.99.1"
+
+  # If connection to 'host' cannot be established, reMass tries the fallback:
+  host_fallback = ""
+
+  # If you have set up authentication via your private key, specify
+  keyfile = "~/.ssh/my_private_key"
+
+  # If keyfile is set, this password will be used to unlock the key. Otherwise,
+  # reMass assumes it is the tablet's root password.
+  password = "password"
+
+  # SSH connection timeout in seconds
+  timeout = 1
+  ```
+* **Templates:** TODO load templates for export
+* **Screens:** for ease of use, copy your custom templates to 
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
