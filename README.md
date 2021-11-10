@@ -12,15 +12,16 @@ There might be bugs, you may lose data, your device may crash, etc.
 
 ## TUI Demo
 After setup, you can run `reMass` via `python -m remass`:
-* Start-up screen (provides SSH connection options)  
+* Start-up screen  
   ![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
 * Main application screen showing device status information:  
-  ![Main form](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main form")
+  ![Main screen](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main screen")
 * PDF/PNG export screen:  
-  ![Export form](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export form")
-* TODO Customizing splash screens:  
+  ![Export screen](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export screen")
 * TODO Templates
   * https://github.com/rschroll/rmrl#templates (our patched rmrl can be used with custom template paths, thus we can use the "load templates" button if you're allowed)
+* Customizing the tablet's splash screens:  
+  ![Screen customization](https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true "Screen customization")
 
 ## Setup
 #### System Prerequisites:
