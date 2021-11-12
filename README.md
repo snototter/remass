@@ -77,7 +77,7 @@ TODO add documentation
   timeout = 1
   ```
 * **Templates:** TODO load templates for export
-* **Screens:** for ease of use, copy your custom templates to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.
+* **Screens:** for ease of use, copy your custom splash screens to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
