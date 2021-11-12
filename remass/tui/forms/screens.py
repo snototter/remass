@@ -5,7 +5,7 @@ import os
 from ..utilities import add_empty_row, open_with_default_application
 from ..widgets import TitleCustomFilenameCombo
 from ...tablet import RAConnection, SplashScreenUtil, NotEnoughDiskSpaceError
-from ...config import RAConfig, abbreviate_user, backup_filename
+from ...config import RAConfig, abbreviate_user, next_backup_filename
 
 
 class ScreenCustomizationForm(nps.ActionFormMinimal):
@@ -72,7 +72,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
     def _backup_screen(self, *args, **kwargs):
         screen_selection = SplashScreenUtil.SCREENS[self.rm_screen.value[0]]
         remote_file = SplashScreenUtil.tablet_filename(screen_selection)
-        bak_file = backup_filename(screen_selection[0], self._cfg.screen_backup_dir)
+        bak_file = next_backup_filename(screen_selection[0], self._cfg.screen_backup_dir)
         self._connection.download_file(remote_file, bak_file)
         nps.notify_confirm(f"'{screen_selection[1]}' screen has been sucessfully backed up to:\n"
                            f"{abbreviate_user(bak_file)}",

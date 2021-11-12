@@ -12,17 +12,32 @@ import platform
 APP_NAME = 'remass'
 
 
-def backup_filename(filename: str, backup_folder: str) -> str:
-    """Returns a non-existing filename to be used to back up the given file
-    within the backup_folder"""
+def _backup_filename(filename: str, backup_folder: str, return_latest: bool) -> str:
     froot, fext = os.path.splitext(filename)
     _, fname = os.path.split(froot)
+    prev = None
     bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.bak')
     cnt = 1
     while os.path.exists(bpath):
+        prev = bpath
         bpath = os.path.join(backup_folder, f'{fname:s}{fext:s}.{cnt:d}.bak')
         cnt += 1
-    return bpath
+    if return_latest:
+        return prev
+    else:
+        return bpath
+
+
+def next_backup_filename(filename: str, backup_folder: str) -> str:
+    """Returns a non-existing filename to be used to back up the given file
+    within the backup_folder"""
+    return _backup_filename(filename, backup_folder, False)
+
+
+def latest_backup_filename(filename: str, backup_folder: str) -> str:
+    """Returns the most recent backup of the original filename within
+    the backup_folder"""
+    return _backup_filename(filename, backup_folder, True)
 
 
 def abbreviate_user(path: str):
@@ -53,6 +68,7 @@ def setup_app_dir(folder: str) -> str:
     subfolders = [
         os.path.join(folder, 'exports'),
         os.path.join(folder, 'templates'),
+        os.path.join(folder, 'templates', 'backups'),
         os.path.join(folder, 'screens'),
         os.path.join(folder, 'screens', 'backups')]
     for sf in subfolders:
@@ -123,6 +139,10 @@ class RAConfig(object):
     @property
     def template_dir(self):
         return os.path.join(self.app_dir, 'templates')
+
+    @property
+    def template_backup_dir(self):
+        return os.path.join(self.app_dir, 'templates', 'backups')
 
     @property
     def screen_dir(self):

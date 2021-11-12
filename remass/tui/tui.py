@@ -6,7 +6,7 @@ from .utilities import add_empty_row, full_class_name
 
 from ..tablet import RAConnection
 from ..config import RAConfig
-from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateManagementForm
+from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateSynchronizationForm, TemplateRemovalForm
 
 ###############################################################################
 # Main
@@ -55,7 +55,8 @@ class MainForm(nps.ActionFormMinimal):
         self.add_handlers({
             "^X": self.exit_application,
             "^E": self._switch_form_export,
-            "^T": self._switch_form_templates,
+            "^T": self._switch_form_template_sync,
+            "^R": self._switch_form_template_del,
             "^S": self._switch_form_screens
         })
         self._info_lbl = self.add(nps.Textfield, value="", editable=False, color='STANDOUT')
@@ -82,8 +83,11 @@ class MainForm(nps.ActionFormMinimal):
         self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
                  when_pressed_function=self._switch_form_export)
         add_empty_row(self)   
-        self.add(nps.ButtonPress, name='[Manage Templates]', relx=3,
-                 when_pressed_function=self._switch_form_templates)
+        self.add(nps.ButtonPress, name='[Up-/Download Templates]', relx=3,
+                 when_pressed_function=self._switch_form_template_sync)
+        add_empty_row(self)
+        self.add(nps.ButtonPress, name='[Remove Templates]', relx=3,
+                 when_pressed_function=self._switch_form_template_del)
         add_empty_row(self)
         self.add(nps.ButtonPress, name='[Change Screens]', relx=3,
                  when_pressed_function=self._switch_form_screens)
@@ -93,8 +97,13 @@ class MainForm(nps.ActionFormMinimal):
         self.editing = False
         self.parentApp.switchFormNow()
     
-    def _switch_form_templates(self, *args, **kwargs):
-        self.parentApp.setNextForm('TEMPLATES')
+    def _switch_form_template_sync(self, *args, **kwargs):
+        self.parentApp.setNextForm('TEMPLATESYNC')
+        self.editing = False
+        self.parentApp.switchFormNow()
+
+    def _switch_form_template_del(self, *args, **kwargs):
+        self.parentApp.setNextForm('TEMPLATEDEL')
         self.editing = False
         self.parentApp.switchFormNow()
 
@@ -127,8 +136,10 @@ class RATui(nps.NPSAppManaged):
                           name='reMass')
         self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection,
                           name='reMass: Export PDF')
-        self.addFormClass('TEMPLATES', TemplateManagementForm, self._cfg, self._connection,
-                          name='reMass: Template Management')
+        self.addFormClass('TEMPLATESYNC', TemplateSynchronizationForm, self._cfg, self._connection,
+                          name='reMass: Template Up-/Download')
+        self.addFormClass('TEMPLATEDEL', TemplateRemovalForm, self._cfg, self._connection,
+                          name='reMass: Template Removal')
         self.addFormClass('SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
                           name='reMass: Screen Customization')
 
