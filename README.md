@@ -88,3 +88,16 @@ TODO add documentation
   # Change via xdg-mime, e.g. use 'nemo' as default file browser
   xdg-mime default nemo.desktop inode/directory
   ```
+
+## Status
+`v1.0` will be considered feature-complete:
+* [x] Notebook export
+* [x] Screen customization
+* [ ] Template management
+
+Nice-to-have features for (very! distant) future updates:
+* [ ] Adjust tablet configuration (i.e. xochitl.conf settings)
+* [ ] Automatically set the timezone (must be able to query the host's timezone without DST, though)
+* [ ] Adjust the hostname
+* [ ] Reboot the tablet
+* [ ] Remove rm files from the tablet (both, move to trash and delete permanently)
