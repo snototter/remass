@@ -22,9 +22,7 @@ class TemplateManagementForm(nps.ActionFormMinimal):
             "^X": self.exit_application,
             "^B": self._to_main
         })
-        local_tpls = [f for f in os.listdir(self._cfg.template_dir) if f.lower().endswith('.svg')]
-        lbl = f'SVG templates available for export: {len(local_tpls)}'
-        self.add(nps.Textfield, value=lbl, editable=False, color='STANDOUT')
+        self.lbl_local_templates = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
         self.btn_load = self.add(nps.ButtonPress, name='[Load Templates From Tablet]', relx=3,
                                  when_pressed_function=self._load_templates)
         add_empty_row(self)
@@ -32,11 +30,19 @@ class TemplateManagementForm(nps.ActionFormMinimal):
         add_empty_row(self)
         self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
+        self._update_labels()
+    
+    def _update_labels(self):
+        local_tpls = [f for f in os.listdir(self._cfg.template_dir) if f.lower().endswith('.svg')]
+        lbl = f'SVG templates available for export: {len(local_tpls)}'
+        self.lbl_local_templates.value = lbl
+        super().display(clear=True)
 
     def _load_templates(self, *args, **kwargs):
         self._connection.download_templates(self._cfg.template_dir)
         nps.notify_confirm(f"Templates have been downloaded to\n{self._cfg.template_dir}",
                            title='Info', form_color='STANDOUT', editw=1)
+        self._update_labels()
 
     def _restart_ui(self, *args, **kwargs):
         self._connection.restart_ui()
