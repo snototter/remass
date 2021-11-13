@@ -30,7 +30,7 @@ if __name__ == '__main__':
     connection.open()
     from .templates import TemplateOrganizer
     org = TemplateOrganizer(cfg, connection)
-    ctpls = org.custom_templates
+    ctpls = org.load_custom_templates()
     org.synchronize([ctpls[1]], True, [ctpls[0]])
 
     # # connection.download_file('/home/root/log.txt', 'test-download.txt')

@@ -42,13 +42,15 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
         self._update_widgets()
     
     def _update_widgets(self):
-        lbl = f'Templates available local for Export: {len(self._organizer.backedup_templates)}'
+        backed_up = self._organizer.load_backedup_templates()
+        lbl = f'Templates available local for Export: {len(backed_up)}'
         self.lbl_backups.value = lbl
 
-        lbl = f'Templates available for Upload: {len(self._organizer.custom_templates)}'
+        uploadable = self._organizer.load_uploadable_templates()
+        lbl = f'Templates available for Upload: {len(uploadable)}'
         self.lbl_uploads.value = lbl
 
-        uploadable = self._organizer.custom_templates
+        
         if len(uploadable) != len(self._uploadable):
             self._uploadable = uploadable
             lbls = [template_name(u) for u in self._uploadable]

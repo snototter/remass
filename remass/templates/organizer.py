@@ -40,9 +40,8 @@ class TemplateOrganizer(object):
         self._connection = connection
         self.local_template_config = None
 
-    @property
-    def backedup_templates(self):
-    # def load_template_backups(self):
+    def load_backedup_templates(self):
+        """Loads the templates from the latest backed up 'templates.json' file."""
         tpl_json = latest_backup_filename('templates.json', self._cfg.template_backup_dir)
         if tpl_json is None:
             return list()
@@ -50,8 +49,12 @@ class TemplateOrganizer(object):
             tcfg = json.load(jf)
             return tcfg['templates']
 
-    @property
-    def custom_templates(self):
+    def load_custom_templates(self):
+        """Loads all custom templates which are uploadable, i.e. there must be:
+        * a "name".inc.json configuration
+        * a "name".svg
+        * a "name".png
+        """
         tpls = list()
         filenames = os.listdir(self._cfg.template_dir)
         for fn in filenames:
@@ -96,17 +99,22 @@ class TemplateOrganizer(object):
                 if os.path.exists(src_svg) and os.path.exists(src_png):
                     dst_svg = str(PurePosixPath(RM_TEMPLATE_PATH, tpl['filename'] + '.svg'))
                     dst_png = str(PurePosixPath(RM_TEMPLATE_PATH, tpl['filename'] + '.svg'))
-                    upload_files.append((src_svg, dst_svg))
-                    upload_files.append((src_png, dst_png))
+                    add = False
                     # Update the tablet's config:
                     if _exists_custom_template(tpl, tablet_config):
                         # Do we want to overwrite (e.g. changing the icon or whatever)?
                         if replace_templates:
-                            print(f'TODO ------- replacing "{template_name(tpl)}"')
+                            print(f'-- replacing "{template_name(tpl)}"') #TODO remove
                             tablet_config['templates'] = [e for e in tablet_config['templates'] if not _equal_template(tpl, e)]
                             tablet_config['templates'].append(tpl)
+                            add = True
                     else:
+                        print(f'-- adding "{template_name(tpl)}"') #TODO remove
                         tablet_config['templates'].append(tpl)
+                        add = True
+                    if add:
+                        upload_files.append((src_svg, dst_svg))
+                        upload_files.append((src_png, dst_png))
 
             # Remove the disabled templates from the tablet's config
             if len(templates_to_disable) > 0:
@@ -118,10 +126,14 @@ class TemplateOrganizer(object):
                 # Remove the template configurations (we DON'T delete the files
                 # from the tablet)
                 for tpl in templates_to_disable:
+                    print(f'-- disabling "{template_name(tpl)}"') #TODO remove
                     tablet_config['templates'] = [e for e in tablet_config['templates'] if not _equal_template(tpl, e)]
             print(f'replacing config by {len(tablet_config["templates"])} tpls') #TODO remove
             # Save modified templates.json (locally)
             with open(temp_tpljson, 'w') as jf:
                 json.dump(tablet_config, jf, indent=2)
             upload_files.append((temp_tpljson, RM_TEMPLATE_JSON_PATH))
-            print('upload list:\n* ' + '\n* '.join([f'{u[0]} --> {u[1]}' for u in upload_files])) # TODO remove
+            # Upload files
+            for src, dst in upload_files:
+                print(f'Uploading {src} --> {dst}')
+            #TODO backup templates also?
