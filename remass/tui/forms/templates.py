@@ -31,9 +31,7 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
         add_empty_row(self)
         self.lbl_uploads = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
         self.select_uploads = self.add(nps.TitleMultiSelect, max_height=-4, name='Select for Upload',
-                                       relx=4, scroll_exit=True, begin_entry_at=20) #,
-                                    #    value=[idx for idx in range(len(uploadable))],
-                                    #    values=uploadable)
+                                       relx=4, scroll_exit=True, begin_entry_at=20)
         self.btn_upload = self.add(nps.ButtonPress, name="[Upload Selected]", relx=3,
                                    when_pressed_function=self._upload_templates)
         add_empty_row(self)
@@ -66,7 +64,8 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
 
     def _upload_templates(self, *args, **kwargs):
         to_upload = [self._uploadable[i] for i in self.select_uploads.value]
-        self._organizer.upload(to_upload)
+        self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True)
+        self._update_widgets()
 
     def _restart_ui(self, *args, **kwargs):
         self._connection.restart_ui()
