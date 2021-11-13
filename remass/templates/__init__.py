@@ -1,1 +1,1 @@
-from .organizer import TemplateOrganizer
+from .organizer import TemplateOrganizer, template_name

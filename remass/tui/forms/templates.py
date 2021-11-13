@@ -5,7 +5,7 @@ import os
 from ..utilities import add_empty_row
 from ...tablet import RAConnection
 from ...config import RAConfig
-from ...templates import TemplateOrganizer
+from ...templates import TemplateOrganizer, template_name
 
 
 class TemplateSynchronizationForm(nps.ActionFormMinimal):
@@ -14,6 +14,7 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
         self._cfg = cfg
         self._connection = connection
         self._organizer = TemplateOrganizer(cfg, connection)
+        self._uploadable = list()
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
@@ -29,36 +30,41 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
                                  when_pressed_function=self._load_templates)
         add_empty_row(self)
         self.lbl_uploads = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
-        # uploadable = [f'foo {idx}' for idx in range(40)] #TODO remove
-        uploadable = self._organizer.custom_template_names
         self.select_uploads = self.add(nps.TitleMultiSelect, max_height=-4, name='Select for Upload',
-                                       relx=4, scroll_exit=True, begin_entry_at=20,
-                                       value=[idx for idx in range(len(uploadable))],
-                                       values=uploadable)
+                                       relx=4, scroll_exit=True, begin_entry_at=20) #,
+                                    #    value=[idx for idx in range(len(uploadable))],
+                                    #    values=uploadable)
         self.btn_upload = self.add(nps.ButtonPress, name="[Upload Selected]", relx=3,
                                    when_pressed_function=self._upload_templates)
         add_empty_row(self)
         self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
-        self._update_labels()
+        self._update_widgets()
     
-    def _update_labels(self):
+    def _update_widgets(self):
         lbl = f'Templates available local for Export: {len(self._organizer.backedup_templates)}'
         self.lbl_backups.value = lbl
 
         lbl = f'Templates available for Upload: {len(self._organizer.custom_templates)}'
         self.lbl_uploads.value = lbl
+
+        uploadable = self._organizer.custom_templates
+        if len(uploadable) != len(self._uploadable):
+            self._uploadable = uploadable
+            lbls = [template_name(u) for u in self._uploadable]
+            self.select_uploads.values = lbls
+            self.select_uploads.value = [i for i in range(len(self._uploadable))]
         super().display(clear=True)
 
     def _load_templates(self, *args, **kwargs):
         self._connection.download_templates(self._cfg.template_backup_dir)
         nps.notify_confirm(f"Templates have been downloaded to\n{self._cfg.template_backup_dir}",
                            title='Info', form_color='STANDOUT', editw=1)
-        self._update_labels()
+        self._update_widgets()
 
     def _upload_templates(self, *args, **kwargs):
-        #TODO self.select_uploads
-        pass
+        to_upload = [self._uploadable[i] for i in self.select_uploads.value]
+        self._organizer.upload(to_upload)
 
     def _restart_ui(self, *args, **kwargs):
         self._connection.restart_ui()

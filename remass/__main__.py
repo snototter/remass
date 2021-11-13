@@ -19,15 +19,20 @@ if __name__ == '__main__':
     # from .tablet import SplashScreenUtil
     # print(SplashScreenUtil.tablet_filename('foo'))
     # print(SplashScreenUtil.tablet_filename(('frobnaten', 'bar')))
-    RATui(args).run()
+    # RATui(args).run()
 
     # from .tablet import validate_custom_screen
     # print(validate_custom_screen('test-std.png'))
     # print(validate_custom_screen('test-alpha.png'))
 
-    # cfg = RAConfig(args)
-    # connection = RAConnection(cfg)
-    # connection.open()
+    cfg = RAConfig(args)
+    connection = RAConnection(cfg)
+    connection.open()
+    from .templates import TemplateOrganizer
+    org = TemplateOrganizer(cfg, connection)
+    ctpls = org.custom_templates
+    org.synchronize([ctpls[1]], True, [ctpls[0]])
+
     # # connection.download_file('/home/root/log.txt', 'test-download.txt')
     # connection.upload_file('test.txt', '/home/root/uploaded.txt')
     # connection.close()
