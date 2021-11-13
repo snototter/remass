@@ -11,17 +11,25 @@ I release this utility in the hope that it is helpful to others, but I can make 
 There might be bugs, you may lose data, your device may crash, etc.
 
 ## TUI Demo
-After setup, you can run `reMass` via `python -m remass`:
-* Start-up screen  
-  ![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
-* Main application screen showing device status information:  
-  ![Main screen](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main screen")
-* PDF/PNG export screen:  
-  ![Export screen](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export screen")
-* TODO Templates
-  * https://github.com/rschroll/rmrl#templates (our patched rmrl can be used with custom template paths, thus we can use the "load templates" button if you're allowed)
-* Customizing the tablet's splash screens:  
-  ![Screen customization](https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true "Screen customization")
+After [setup](#setup), you can run `reMass` via `python -m remass`. The following screenshots show its basic functionalities:
+#### Start-up Screen
+![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
+
+#### Main Application Screen
+![Main screen](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main screen")
+
+#### PDF/PNG Export
+![Export screen](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export screen")
+
+#### Template Up-/Download
+TODO doc + screenshot
+* https://github.com/rschroll/rmrl#templates (our patched rmrl can be used with custom template paths, thus we can use the "load templates" button if you're allowed)
+
+#### Template Removal
+TODO doc + screenshot
+
+#### Customizing Splash Screens
+![Screen customization](https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true "Screen customization")
 
 ## Setup
 #### System Prerequisites:
@@ -76,8 +84,10 @@ TODO add documentation
   # SSH connection timeout in seconds
   timeout = 1
   ```
-* **Templates:** TODO load templates for export
-* **Screens:** for ease of use, copy your custom splash screens to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.
+* **Templates:** TODO load templates for export  
+  To get started, you can also try [these custom templates](https://github.com/snototter/retweaks/tree/master/templates).
+* **Screens:** for ease of use, copy your custom splash screens to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.  
+  To get started, you can also try [these custom screens](https://github.com/snototter/retweaks/tree/master/splash-screens).
 
 #### Miscellaneous (Linux)
 * To change the system-wide default applications to open PDF files/directories, you can use `xdg`:
