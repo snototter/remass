@@ -108,3 +108,7 @@ class TemplateRemovalForm(nps.ActionFormMinimal):
         self.parentApp.setNextForm('MAIN')
         self.editing = False
         self.parentApp.switchFormNow()
+
+#TODO load remote templates.json
+#TODO list templates
+#TODO synchronize disabled
