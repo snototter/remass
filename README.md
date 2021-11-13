@@ -1,7 +1,8 @@
 # reMass
 TUI (text-based UI) for Unix-like systems which simplifies customizing reMarkable&reg; e-ink tablets (screens &amp; templates) and provides basic PDF &amp; PNG export functionality.  
 
-Why yet another rM assistant? - because I needed a quick solution to export my notes &amp; drawings without internet connection (and I find such a rather simplistic TUI easier to use than point-and-click interfaces).
+Why yet another rM assistant? - because I needed a quick solution to export my notes &amp; drawings without internet connection (and I find such a rather simplistic TUI easier to use than point-and-click interfaces).  
+If you're unexperienced at using the command line or are afraid of breaking something, you should likely prefer [RCU](http://www.davisr.me/projects/rcu/).
 
 ## Disclaimer
 This is not an official reMarkable&reg; product, and I am not affiliated with reMarkable AS in any way.  
