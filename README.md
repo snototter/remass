@@ -14,13 +14,13 @@ There might be bugs, you may lose data, your device may crash, etc.
 ## TUI Demo
 After [setup](#setup), you can run `reMass` via `python -m remass`. The following screenshots show its basic functionalities:
 #### Start-up Screen
-![Connection dialog](https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true "Connection dialog")
+<img src="https://github.com/snototter/remass/blob/master/screenshots/startup.jpg?raw=true" alt="Connection Dialog" width="50%"/>
 
 #### Main Application Screen
-![Main screen](https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true "Main screen")
+<img src="https://github.com/snototter/remass/blob/master/screenshots/main.jpg?raw=true" alt="Main Screen" width="50%"/>
 
 #### PDF/PNG Export
-![Export screen](https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true "Export screen")
+<img src="https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true" alt="PDF/PNG Export" width="50%"/>
 
 #### Template Up-/Download
 TODO doc + screenshot
@@ -30,7 +30,7 @@ TODO doc + screenshot
 TODO doc + screenshot
 
 #### Customizing Splash Screens
-![Screen customization](https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true "Screen customization")
+<img src="https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true" alt="Screen Customization" width="50%"/>
 
 ## Setup
 #### System Prerequisites:
