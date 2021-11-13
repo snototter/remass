@@ -91,9 +91,10 @@ TODO add documentation
 
 ## Status
 `v1.0` will be considered feature-complete:
-* [x] Notebook export
-* [x] Screen customization
-* [ ] Template management
+* [x] Export notebooks to PDF & PNG
+* [x] Change splash screens on tablet
+* [x] Upload custom templates to tablet
+* [ ] Disable/remove templates from tablet
 
 Nice-to-have features for (very! distant) future updates:
 * [ ] Adjust tablet configuration (i.e. xochitl.conf settings)
