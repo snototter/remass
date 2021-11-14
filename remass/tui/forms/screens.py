@@ -31,7 +31,6 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
         add_empty_row(self)
         self.add(nps.ButtonPress, name='[Validate Image]', relx=3,
                 when_pressed_function=self._validate_image)
-        add_empty_row(self)
         self.add(nps.ButtonPress, name='[Open Image Viewer]', relx=3,
                 when_pressed_function=self._open_image)
         add_empty_row(self)
@@ -43,10 +42,8 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
         add_empty_row(self)
         self.btn_backup = self.add(nps.ButtonPress, name='[Backup Current Screen]',
                                    relx=3, when_pressed_function=self._backup_screen)
-        add_empty_row(self)
         self.btn_start = self.add(nps.ButtonPress, name='[Upload Selected Screen]', relx=3,
                                   when_pressed_function=self._upload_screen)
-        add_empty_row(self)
         self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
 

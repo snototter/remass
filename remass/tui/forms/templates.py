@@ -35,7 +35,6 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
                                        relx=4, scroll_exit=True, begin_entry_at=20)
         self.btn_upload = self.add(nps.ButtonPress, name="[Upload Selected]", relx=3,
                                    when_pressed_function=self._upload_templates)
-        add_empty_row(self)
         self.btn_reload_ui = self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                                       when_pressed_function=self._restart_ui)
         self._update_widgets()
