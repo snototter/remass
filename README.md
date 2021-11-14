@@ -106,12 +106,10 @@ python -m remass
 * [x] Change splash screens on tablet
 * [x] Upload custom templates to tablet
 * [x] Disable/remove templates from tablet
+* [x] Set the timezone
+* [x] Adjust the hostname
+* [x] Reboot the tablet
 
 Nice-to-have features for (very! distant) future updates:
 * [ ] Adjust tablet configuration (i.e. xochitl.conf settings)
-* [ ] Automatically set the timezone (must be able to query the host's timezone without DST, though)  
-  remote: `timedatectl set-timezone (non-DST)TZ`  
-  python: `import time; time.tzname[0] # is non-DST`
-* [ ] Adjust the hostname
-* [ ] Reboot the tablet
 * [ ] Remove rm files from the tablet (both, move to trash and delete permanently)

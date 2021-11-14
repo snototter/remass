@@ -89,7 +89,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
             self._connection.upload_file(self.screen_filename.filename, remote_file)
             nps.notify_confirm(f"'{screen_selection[1]}' screen has been sucessfully uploaded.\n"
                                "Please restart the UI/reboot the table to use it.",
-                               title='Info', form_color='STANDOUT')
+                               title='Info', form_color='STANDOUT', editw=1)
         except NotEnoughDiskSpaceError as e:
             nps.notify_confirm("Not enough disk space on tablet.\n"
                                f"----------------------------------------\n{e}",

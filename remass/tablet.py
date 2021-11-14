@@ -111,7 +111,19 @@ def format_uptime(uptime: str) -> str:
 #     return matches
 
 
+def is_valid_hostname(hostname: str) -> bool:
+    """Checks if the given string is a valid hostname."""
+    if hostname is None:
+        return False
+    hostname = hostname.strip()
+    if len(hostname) == 0 or len(hostname) > 63:
+        return False
+    match = re.match(r'^[a-z0-9]+[a-z0-9\-]*$', hostname)
+    return match is not None
+
+
 def ssh_cmd_output(client: paramiko.SSHClient, cmd: str) -> str:
+    """Executes the given command on the remote and returns its stdout"""
     _, out, _ = client.exec_command(cmd)
     return out.read().decode("utf-8").strip()
 
@@ -186,6 +198,13 @@ class TabletConnection(object):
     def get_hostname(self) -> str:
         return ssh_cmd_output(self._client, "cat /etc/hostname")
 
+    def set_hostname(self, hostname: str) -> bool:
+        hostname = hostname.strip()
+        if not is_valid_hostname(hostname):
+            return False
+        ssh_cmd_output(self._client, f'hostnamectl set-hostname "{hostname}"')
+        return True
+
     def get_free_space_str(self, location: str = '/') -> str:
         return ssh_cmd_output(self._client, 'df -h ' + f'"{location}"' + " | tail -n1 | awk '{print $4 \" / \" $2}'")
 
@@ -256,6 +275,17 @@ class TabletConnection(object):
         sftp = self._client.open_sftp()
         sftp.put(local_filename, remote_filename)
         sftp.close()
+
+    def get_remote_time(self) -> str:
+        """Returns a string representation of the tablet's current date & time."""
+        return ssh_cmd_output(self._client, 'date +"%Y-%m-%d %T %Z"')
+
+    def set_remote_timezone(self, tz: str) -> None:
+        """Changes the tablet's timezone to the given 'tz' string, e.g. 'UTC', 
+        'CET', etc. You have to ensure that you provide the non-DST timezone,
+        i.e. 'CET' instead of 'CEST'!
+        """
+        ssh_cmd_output(self._client, f'timedatectl set-timezone "{tz}"')
 
     def is_connected(self) -> bool:
         # Returns True if the client is still connected and the session is

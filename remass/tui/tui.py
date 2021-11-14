@@ -6,7 +6,9 @@ from .utilities import add_empty_row, full_class_name
 
 from ..tablet import TabletConnection
 from ..config import RemassConfig
-from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateSynchronizationForm, TemplateRemovalForm
+from .forms import StartUpForm, ExportForm, ScreenCustomizationForm,\
+    TemplateSynchronizationForm, TemplateRemovalForm, DeviceSettingsForm
+
 
 ###############################################################################
 # Main
@@ -79,7 +81,7 @@ class MainForm(nps.ActionFormMinimal):
                                        relx=4, begin_entry_at=24, editable=False)
         add_empty_row(self)
         self.add(nps.Textfield, value='Utilities', editable=False, color='STANDOUT')
-        self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
+        self.add(nps.ButtonPress, name='[Export Notebooks]', relx=3,
                  when_pressed_function=self._switch_form_export)
         self.add(nps.ButtonPress, name='[Up-/Download Templates]', relx=3,
                  when_pressed_function=self._switch_form_template_sync)
@@ -89,6 +91,9 @@ class MainForm(nps.ActionFormMinimal):
                  when_pressed_function=self._switch_form_screens)
         add_empty_row(self)
         self.add(nps.Textfield, value='Tablet Control', editable=False, color='STANDOUT')
+        self.add(nps.ButtonPress, name='[Adjust Settings]', relx=3,
+                 when_pressed_function=self._switch_form_control)
+        add_empty_row(self)
         self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
                  when_pressed_function=self._restart_tablet_ui)
         self.add(nps.ButtonPress, name='[Reboot Tablet]', relx=3,
@@ -111,6 +116,11 @@ class MainForm(nps.ActionFormMinimal):
 
     def _switch_form_screens(self, *args, **kwargs):
         self.parentApp.setNextForm('SCREENS')
+        self.editing = False
+        self.parentApp.switchFormNow()
+
+    def _switch_form_control(self, *args, **kwargs):
+        self.parentApp.setNextForm('CONTROL')
         self.editing = False
         self.parentApp.switchFormNow()
 
@@ -153,6 +163,8 @@ class RATui(nps.NPSAppManaged):
                           name='reMass: Template Removal')
         self.addFormClass('SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
                           name='reMass: Screen Customization')
+        self.addFormClass('CONTROL', DeviceSettingsForm, self._cfg, self._connection,
+                          name='reMass: Device Settings')
 
     def onCleanExit(self):
         self._connection.close()
