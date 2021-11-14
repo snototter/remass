@@ -116,7 +116,7 @@ def ssh_cmd_output(client: paramiko.SSHClient, cmd: str) -> str:
     return out.read().decode("utf-8").strip()
 
 
-class RAConnection(object):
+class TabletConnection(object):
     def __init__(self, config):
         self._cfg = config['connection']
         self._client = None

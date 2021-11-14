@@ -26,8 +26,9 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
             "^B": self._to_main
         })
         self.lbl_backups = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
-        self.btn_load = self.add(nps.ButtonPress, name='[Load Templates From Tablet]', relx=3,
-                                 when_pressed_function=self._load_templates)
+        add_empty_row(self)
+        self.btn_load = self.add(nps.ButtonPress, name='[Download Templates From Tablet]', relx=3,
+                                 when_pressed_function=self._download_templates)
         add_empty_row(self)
         self.lbl_uploads = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
         self.select_uploads = self.add(nps.TitleMultiSelect, max_height=-4, name='Select for Upload',
@@ -56,7 +57,7 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
             self.select_uploads.value = [i for i in range(len(self._uploadable))]
         super().display(clear=True)
 
-    def _load_templates(self, *args, **kwargs):
+    def _download_templates(self, *args, **kwargs):
         self._connection.download_templates(self._cfg.template_backup_dir)
         nps.notify_confirm(f"Templates have been downloaded to\n{self._cfg.template_backup_dir}",
                            title='Info', form_color='STANDOUT', editw=1)

@@ -32,7 +32,6 @@ setuptools.setup(
         'svglib>=1.0.1',
         'xdg',
         'rmrl @ git+https://github.com/snototter/rmrl.git',
-        #'rmrl',
         'toml'
     ],
     classifiers=[
