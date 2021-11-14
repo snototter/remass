@@ -152,7 +152,10 @@ class TabletConnection(object):
 
     def restart_ui(self) -> None:
         ssh_cmd_output(self._client, 'systemctl restart xochitl')
-    
+
+    def reboot_tablet(self) -> None:
+        ssh_cmd_output(self._client, 'reboot')
+
     def get_tablet_model(self) -> str:
         return ssh_cmd_output(self._client, "cat /sys/devices/soc0/machine")
     

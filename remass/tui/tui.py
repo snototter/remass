@@ -78,19 +78,21 @@ class MainForm(nps.ActionFormMinimal):
         self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
                                        relx=4, begin_entry_at=24, editable=False)
         add_empty_row(self)
-        add_empty_row(self)
-        self.add(nps.Textfield, value='Tasks', editable=False, color='STANDOUT')
+        self.add(nps.Textfield, value='Utilities', editable=False, color='STANDOUT')
         self.add(nps.ButtonPress, name='[Export PDF]', relx=3,
                  when_pressed_function=self._switch_form_export)
-        add_empty_row(self)   
         self.add(nps.ButtonPress, name='[Up-/Download Templates]', relx=3,
                  when_pressed_function=self._switch_form_template_sync)
-        add_empty_row(self)
         self.add(nps.ButtonPress, name='[Remove Templates]', relx=3,
                  when_pressed_function=self._switch_form_template_del)
-        add_empty_row(self)
         self.add(nps.ButtonPress, name='[Change Screens]', relx=3,
                  when_pressed_function=self._switch_form_screens)
+        add_empty_row(self)
+        self.add(nps.Textfield, value='Tablet Control', editable=False, color='STANDOUT')
+        self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
+                 when_pressed_function=self._restart_tablet_ui)
+        self.add(nps.ButtonPress, name='[Reboot Tablet]', relx=3,
+                 when_pressed_function=self._reboot_tablet)
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
@@ -116,6 +118,15 @@ class MainForm(nps.ActionFormMinimal):
         self.parentApp.setNextForm('EXPORT')
         self.editing = False
         self.parentApp.switchFormNow()
+
+    def _restart_tablet_ui(self, *args, **kwargs):
+        self._connection.restart_ui()
+
+    def _reboot_tablet(self, *args, **kwargs):
+        if nps.notify_yes_no('Do you really want to reboot the tablet?\nreMass will exit, too.',
+                             title='Confirm', form_color='STANDOUT', editw=1):
+            self._connection.reboot_tablet()
+            self.exit_application()
 
 
 class RATui(nps.NPSAppManaged):
