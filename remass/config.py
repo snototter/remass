@@ -114,7 +114,6 @@ def merge_configs(a: dict, b: dict, path: str = None) -> dict:
 
 class RemassConfig(object):
     def __init__(self, args=None):
-        #TODO document in README
         self._cfg = {
             'connection': {
                 'host': '10.11.99.1',

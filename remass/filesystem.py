@@ -248,23 +248,6 @@ def load_local_filesystem(folder: str) -> Tuple[RCollection, RCollection, Dict[s
     dirent_list = _load_dirents_local(folder)
     return _filesystem_from_dirents(dirent_list)
 
-#TODO local rendering
-# def render_test():
-#     from rmrl import render
-#     # import shutil
-#     render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '18cc3ec7-6e38-49ec-8de4-a28ca9530e02'))
-#     # render_output = render(os.path.join(os.path.dirname(__file__), 'dev-files', 'xochitl', '53d9369c-7f2c-4b6d-b377-0fc5e71135cc'))
-    
-#     print('RENDER OUTPUT: ', type(render_output))
-#     #render_output.seek(0)
-#     from pdfrw import PdfReader, PdfWriter
-#     pdf_stream = PdfReader(render_output)
-#     print('DUMP INFO:', pdf_stream.Info)
-#     pdf_stream.Info.Title = 'Notebook Title'
-#     PdfWriter('render-test.pdf', trailer=pdf_stream).write()
-#     # with open('render-test.pdf', "wb") as outfile:
-#     #     shutil.copyfileobj(output, outfile)
-
 
 def load_remote_filesystem(client: paramiko.SSHClient) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
     """Loads the rM filesystem from the given remote connection.
@@ -347,8 +330,6 @@ class RemoteFileSystemSource(object):
 def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filename: str,
                   progress_cb: Callable[[float], None], **kwargs):
     """Uses the SSH connection to render the given notebook remotely."""
-    #TODO the user has to preload the templates for rmrl, see rmrl doc (~/.local/share/rmrl/templates) - add this to the readme!
-    #TODO also link to the limitations of rmrl (e.g. pencil textures)
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)

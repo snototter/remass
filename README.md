@@ -33,7 +33,7 @@ TODO doc + screenshot
 <img src="https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true" alt="Screen Customization" width="50%"/>
 
 ## Setup
-#### System Prerequisites:
+#### System Prerequisites & Caveats:
 This utility should work on any Unix-like platform (as it requires `curses`). It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS). _If there are prerequisites missing for your platform, please let me know._
 * `reMass` uses [`rmrl`](https://github.com/rschroll/rmrl) for PDF export, which requires Python 3.7 or later.  
   * On Ubuntu 20.04, Python 3.8 is the default version (at the time of writing).  
@@ -43,6 +43,7 @@ This utility should work on any Unix-like platform (as it requires `curses`). It
   `sudo apt install git`
 * `reMass` uses [`pdf2image`](https://pypi.org/project/pdf2image/) for PNG export which requires [`poppler`](https://poppler.freedesktop.org/). On most Linux distributions, you just need to:  
   `sudo apt install poppler-utils`
+* **Limitations:** Currently, `rmrl` doesn't support fine-grained textures for pencils and paintbrushes (all other pen styles render nicely).
 
 #### Install reMass
 The easiest way is to install `reMass` directly from github into a `virtualenv`:
@@ -59,7 +60,6 @@ python -m remass
 ```
 
 #### First Steps
-TODO add documentation
 * **Paths:** by default, `reMass` uses `XDG_CONFIG_HOME/remass/` (usually `$HOME/.config/remass`) to store its configuration and `XDG_DATA_HOME/remass` (usually `$HOME/.local/share/remass`) to store data.  
   You can change these paths via command line arguments, see the provided help:
   ```bash
@@ -105,7 +105,7 @@ TODO add documentation
 * [x] Export notebooks to PDF & PNG
 * [x] Change splash screens on tablet
 * [x] Upload custom templates to tablet
-* [ ] Disable/remove templates from tablet
+* [x] Disable/remove templates from tablet
 
 Nice-to-have features for (very! distant) future updates:
 * [ ] Adjust tablet configuration (i.e. xochitl.conf settings)
