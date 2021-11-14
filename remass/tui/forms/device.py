@@ -67,7 +67,6 @@ class DeviceSettingsForm(nps.ActionFormMinimal):
         self._update_widgets()
 
     def _update_hostname(self, *args, **kwargs):
-        #TODO buttons für reboot device, restart ui
         hostname = self.hostname.value.strip()
         if not self._connection.set_hostname(hostname):
             nps.notify_confirm("Invalid hostname - refer to 'man hostname'\n"
