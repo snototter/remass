@@ -4,13 +4,13 @@ import os
 
 from ..utilities import add_empty_row, open_with_default_application
 from ..widgets import TitleCustomFilenameCombo
-from ...tablet import RAConnection, SplashScreenUtil, NotEnoughDiskSpaceError
-from ...config import RAConfig, abbreviate_user, next_backup_filename
+from ...tablet import TabletConnection, SplashScreenUtil, NotEnoughDiskSpaceError
+from ...config import RemassConfig, abbreviate_user, next_backup_filename
 
 
 class ScreenCustomizationForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         super().__init__(*args, **kwargs)

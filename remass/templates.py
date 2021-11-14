@@ -4,8 +4,8 @@ import shutil
 import tempfile
 from pathlib import PurePosixPath
 from typing import Dict, List
-from ..config import RAConfig, latest_backup_filename, next_backup_filename
-from ..tablet import RAConnection
+from .config import RemassConfig, latest_backup_filename, next_backup_filename
+from .tablet import TabletConnection
 
 
 RM_TEMPLATE_PATH = '/usr/share/remarkable/templates'
@@ -38,7 +38,7 @@ def _equal_template(tpl_a: dict, tpl_b: dict) -> bool:
 
 
 class TemplateOrganizer(object):
-    def __init__(self, cfg: RAConfig, connection: RAConnection):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection):
         self._cfg = cfg
         self._connection = connection
         self.local_template_config = None

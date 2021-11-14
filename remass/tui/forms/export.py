@@ -10,14 +10,14 @@ from ..utilities import add_empty_row, safe_filename, open_with_default_applicat
 
 from ..widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleAlphaSlider, TitlePageRange
 from ..fileselect import TitleRFilenameCombo
-from ...tablet import RAConnection
-from ...config import RAConfig, abbreviate_user
+from ...tablet import TabletConnection
+from ...config import RemassConfig, abbreviate_user
 from ...filesystem import RDocument
 
 
 class ExportForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         self.fs_root, self.fs_trash, self.fs_dirents = self._connection.get_filesystem()

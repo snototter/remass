@@ -3,14 +3,14 @@ import npyscreen as nps
 import os
 
 from ..utilities import add_empty_row
-from ...tablet import RAConnection
-from ...config import RAConfig
+from ...tablet import TabletConnection
+from ...config import RemassConfig
 from ...templates import TemplateOrganizer, template_name
 
 
 class TemplateSynchronizationForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         self._organizer = TemplateOrganizer(cfg, connection)
@@ -83,7 +83,7 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
 
 class TemplateRemovalForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Back'
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         self._organizer = TemplateOrganizer(cfg, connection)

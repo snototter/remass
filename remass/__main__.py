@@ -1,8 +1,7 @@
 import argparse
 import logging
-from .config import RAConfig
-from .tablet import RAConnection
 from .tui import RATui
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -14,27 +13,8 @@ def parse_args():
 
 
 if __name__ == '__main__':
+    # Verbose logging heavily interferes with npyscreen. Thus, restrict it to
+    # warning/error levels only.
     logging.basicConfig(level=logging.WARNING)
     args = parse_args()
-    # from .tablet import SplashScreenUtil
-    # print(SplashScreenUtil.tablet_filename('foo'))
-    # print(SplashScreenUtil.tablet_filename(('frobnaten', 'bar')))
     RATui(args).run()
-
-    #TODO remove
-    # from .tablet import validate_custom_screen
-    # print(validate_custom_screen('test-std.png'))
-    # print(validate_custom_screen('test-alpha.png'))
-
-    # cfg = RAConfig(args)
-    # connection = RAConnection(cfg)
-    # connection.open()
-    # from .templates import TemplateOrganizer
-    # org = TemplateOrganizer(cfg, connection)
-    # ctpls = org.load_uploadable_templates()
-    # org.synchronize([ctpls[0]], True)
-
-    # # connection.download_file('/home/root/log.txt', 'test-download.txt')
-    # connection.upload_file('test.txt', '/home/root/uploaded.txt')
-    # connection.close()
-    # # connection.get_filesystem()

@@ -112,7 +112,7 @@ def merge_configs(a: dict, b: dict, path: str = None) -> dict:
     return a
 
 
-class RAConfig(object):
+class RemassConfig(object):
     def __init__(self, args=None):
         #TODO document in README
         self._cfg = {

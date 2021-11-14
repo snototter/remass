@@ -4,7 +4,7 @@ import os
 
 from ..utilities import add_empty_row, full_class_name
 from ..widgets import TitleCustomFilenameCombo, TitleCustomPassword
-from ...config import RAConfig
+from ...config import RemassConfig
 
 
 class StartUpForm(nps.ActionForm):
@@ -12,7 +12,7 @@ class StartUpForm(nps.ActionForm):
     CANCEL_BUTTON_BR_OFFSET = (2, 20)
     CANCEL_BUTTON_TEXT = "Cancel"
 
-    def __init__(self, config: RAConfig, *args, **kwargs):
+    def __init__(self, config: RemassConfig, *args, **kwargs):
         self._cfg = config
         super().__init__(*args, **kwargs)
 

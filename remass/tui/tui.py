@@ -4,8 +4,8 @@ import socket
 
 from .utilities import add_empty_row, full_class_name
 
-from ..tablet import RAConnection
-from ..config import RAConfig
+from ..tablet import TabletConnection
+from ..config import RemassConfig
 from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateSynchronizationForm, TemplateRemovalForm
 
 ###############################################################################
@@ -14,7 +14,7 @@ from .forms import StartUpForm, ExportForm, ScreenCustomizationForm, TemplateSyn
 class MainForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Exit'
 
-    def __init__(self, cfg: RAConfig, connection: RAConnection, *args, **kwargs):
+    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         super().__init__(*args, **kwargs)
@@ -123,8 +123,8 @@ class RATui(nps.NPSAppManaged):
 
     def __init__(self, args):
         self._args = args
-        self._cfg = RAConfig(args)
-        self._connection = RAConnection(self._cfg)
+        self._cfg = RemassConfig(args)
+        self._connection = TabletConnection(self._cfg)
         super().__init__()
 
     def onStart(self):
