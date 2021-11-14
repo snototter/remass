@@ -104,15 +104,12 @@ python -m remass
   ```
 
 ## Status
-`v1.0` will be considered feature-complete:
-* [x] Export notebooks to PDF & PNG
-* [x] Change splash screens on tablet
-* [x] Upload custom templates to tablet
-* [x] Disable/remove templates from tablet
+There is currently no plan to add further features to `reMass` because I consider `v1.0` to be feature-complete:
+* [x] Export notebooks (PDF & PNG)
+* [x] Change splash screens
+* [x] Upload custom templates
+* [x] Disable/remove templates
+* [x] Reboot the tablet
+* [x] Restart UI
 * [x] Set the timezone
 * [x] Adjust the hostname
-* [x] Reboot the tablet
-
-Nice-to-have features for (very! distant) future updates:
-* [ ] Adjust tablet configuration (i.e. xochitl.conf settings)
-* [ ] Remove rm files from the tablet (both, move to trash and delete permanently)
