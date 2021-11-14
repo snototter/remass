@@ -24,13 +24,16 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
 
 #### Template Up-/Download
 TODO doc + screenshot
-* https://github.com/rschroll/rmrl#templates (our patched rmrl can be used with custom template paths, thus we can use the "load templates" button if you're allowed)
 
 #### Template Removal
-TODO doc + screenshot
+<img src="https://github.com/snototter/remass/blob/master/screenshots/templates2.jpg?raw=true" alt="PDF/PNG Export" width="50%"/>
 
 #### Customizing Splash Screens
 <img src="https://github.com/snototter/remass/blob/master/screenshots/screens.jpg?raw=true" alt="Screen Customization" width="50%"/>
+
+#### Device Settings
+<img src="https://github.com/snototter/remass/blob/master/screenshots/settings.jpg?raw=true" alt="Screen Customization" width="50%"/>
+
 
 ## Setup
 #### System Prerequisites & Caveats:
