@@ -16,7 +16,9 @@ RM_TEMPLATE_JSON_PATH = '/usr/share/remarkable/templates/templates.json'
 
 def template_name(tpl: dict) -> str:
     """Returns a displayable name for the given template configuration"""
-    return tpl['name'] + (' Landscape' if tpl['landscape'] else ' Portrait')
+    if 'landscape' in tpl:
+        return tpl['name'] + (' Landscape' if tpl['landscape'] else ' Portrait')
+    return tpl['name']
 
 
 def _exists_custom_template(custom: dict, tablet_config: dict) -> bool:
@@ -42,6 +44,17 @@ class TemplateOrganizer(object):
         self._cfg = cfg
         self._connection = connection
         self.local_template_config = None
+
+    def load_remote_templates(self):
+        """Loads the template configuration from the tablet."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Download the tablet's templates.json
+            temp_tpljson = os.path.join(temp_dir, 'templates.json')
+            self._connection.download_file(RM_TEMPLATE_JSON_PATH, temp_tpljson)
+            # Load the tablet's templates.json
+            with open(temp_tpljson, 'r') as jf:
+                tablet_config = json.load(jf)
+                return tablet_config['templates']
 
     def load_backedup_templates(self):
         """Loads the templates from the latest backed up 'templates.json' file."""
@@ -72,7 +85,8 @@ class TemplateOrganizer(object):
                         tpls.append(e)
         return tpls
 
-    def synchronize(self, templates_to_add: List[Dict] = list(), replace_templates: bool = False, templates_to_disable: list = list()):
+    def synchronize(self, templates_to_add: List[Dict] = list(), replace_templates: bool = False,
+                    templates_to_disable: list = list(), backup_template_json: bool = True):
         """
         :templates_to_add: list of rM template configurations (check the
                            tablet's "templates.json" file) to be uploaded to
@@ -83,6 +97,8 @@ class TemplateOrganizer(object):
                                i.e. only the configuration will be removed from
                                templates.json - the corresponding SVG & PNG files
                                will NOT be deleted from the tablet
+        :backup_template_json: if True, a backup of the tablet's original templates.json
+                               file will be stored in our local app directory
         """
         if len(templates_to_add) == 0 and len(templates_to_disable) == 0:
             return
@@ -93,6 +109,11 @@ class TemplateOrganizer(object):
             # Load the tablet's templates.json
             with open(temp_tpljson, 'r') as jf:
                 tablet_config = json.load(jf)
+            if backup_template_json:
+                # Store the downloaded templates.json into the remass backup
+                # folder, in case we need/want to restore it later on
+                bfn = next_backup_filename('templates.json', self._cfg.template_backup_dir)
+                shutil.copyfile(temp_tpljson, bfn)
 
             # Collect files to upload and adjust the tablet's config for the
             # requested uploads:
@@ -124,15 +145,8 @@ class TemplateOrganizer(object):
                                         os.path.join(self._cfg.template_backup_dir, tpl['filename'] + '.svg'))
 
             # Remove the disabled templates from the tablet's config
-            if len(templates_to_disable) > 0:
-                # Store the downloaded templates.json into the remass backup
-                # folder, in case we need/want to restore it later on
-                bfn = next_backup_filename('templates.json', self._cfg.template_backup_dir)
-                shutil.copyfile(temp_tpljson, bfn)
-                # Remove the template configurations (we DON'T delete the files
-                # from the tablet)
-                for tpl in templates_to_disable:
-                    tablet_config['templates'] = [e for e in tablet_config['templates'] if not _equal_template(tpl, e)]
+            for tpl in templates_to_disable:
+                tablet_config['templates'] = [e for e in tablet_config['templates'] if not _equal_template(tpl, e)]
             # Save modified templates.json (locally)
             with open(temp_tpljson, 'w') as jf:
                 json.dump(tablet_config, jf, indent=2)

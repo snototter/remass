@@ -64,7 +64,8 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
 
     def _upload_templates(self, *args, **kwargs):
         to_upload = [self._uploadable[i] for i in self.select_uploads.value]
-        self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True)
+        self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True,
+                                    backup_template_json=False)
         self._update_widgets()
 
     def _restart_ui(self, *args, **kwargs):
@@ -87,6 +88,7 @@ class TemplateRemovalForm(nps.ActionFormMinimal):
         self._cfg = cfg
         self._connection = connection
         self._organizer = TemplateOrganizer(cfg, connection)
+        self._remote_templates = list()
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
@@ -97,7 +99,31 @@ class TemplateRemovalForm(nps.ActionFormMinimal):
             "^X": self.exit_application,
             "^B": self._to_main
         })
-        self.add(nps.Textfield, value='TODO', editable=False, color='STANDOUT')
+        self.lbl_remote = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
+        add_empty_row(self)
+        self.select_templates = self.add(nps.TitleMultiSelect, max_height=-4, name='Deselect to Remove',
+                                         relx=4, scroll_exit=True, begin_entry_at=20)
+        self.add(nps.ButtonPress, name="[Synchronize Selection]", relx=3,
+                 when_pressed_function=self._synchronize_selection)
+        self._update_widgets()
+    
+    def _update_widgets(self):
+        remote = self._organizer.load_remote_templates()
+        lbl = f'Templates available on Tablet: {len(remote)}'
+        self.lbl_remote.value = lbl
+        
+        if len(remote) != len(self._remote_templates):
+            self._remote_templates= remote
+            lbls = [template_name(u) for u in self._remote_templates]
+            self.select_templates.values = lbls
+            self.select_templates.value = [i for i in range(len(self._remote_templates))]
+        super().display(clear=True)
+
+    def _synchronize_selection(self, *args, **kwargs):
+        to_disable = [self._remote_templates[i] for i in range(len(self._remote_templates)) if i not in self.select_templates.value]
+        self._organizer.synchronize(templates_to_disable=to_disable,
+                                    backup_template_json=True)
+        self._update_widgets()
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
@@ -108,7 +134,3 @@ class TemplateRemovalForm(nps.ActionFormMinimal):
         self.parentApp.setNextForm('MAIN')
         self.editing = False
         self.parentApp.switchFormNow()
-
-#TODO load remote templates.json
-#TODO list templates
-#TODO synchronize disabled
