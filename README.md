@@ -104,7 +104,7 @@ python -m remass
   ```
 
 ## Status
-There is currently no plan to add further features to `reMass` because I consider `v1.0` to be feature-complete:
+Version `v1.0` provides all initially planned features for `reMass`:
 * [x] Export notebooks (PDF & PNG)
 * [x] Change splash screens
 * [x] Upload custom templates
