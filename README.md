@@ -63,12 +63,12 @@ python -m remass
 ```
 
 #### First Steps
-* **Paths:** by default, `reMass` uses `XDG_CONFIG_HOME/remass/` (usually `$HOME/.config/remass`) to store its configuration and `XDG_DATA_HOME/remass` (usually `$HOME/.local/share/remass`) to store data.  
+* **Paths:** by default, `reMass` uses `$XDG_CONFIG_HOME/remass/` (refer to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/latest/ar01s03.html)) to store its configuration and `$XDG_DATA_HOME/remass` to store data.  
   You can change these paths via command line arguments, see the provided help:
   ```bash
   python -m remass -h
   ```
-* **Configuration:** the starting screen offers all connection options. If you adjust these, you can save this configuration to disk (as TOML) to avoid re-configuration upon the next program start.  
+* **Configuration:** The starting screen offers all connection options. If you adjust these, you can save this configuration to disk (as TOML) to avoid re-configuration upon the next program start.  
   Available options:  
   ```toml
   [connection]
@@ -88,9 +88,9 @@ python -m remass
   # SSH connection timeout in seconds
   timeout = 1
   ```
-* **Templates:** TODO load templates for export  
+* **Templates:** Notebook templates can optionally be used as background when rendering PDFs from notebooks. You have to check first if you are allowed to copy them from your reMarkable device to your computer for personal use. If this is legal in your jurisdiction, you may `Download Templates From Tablet` within the template section of `reMass`.  
   To get started, you can also try [these custom templates](https://github.com/snototter/retweaks/tree/master/templates).
-* **Screens:** for ease of use, copy your custom splash screens to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.  
+* **Screens:** For ease of use, copy your custom splash screens to `XDG_DATA_HOME/remass/screens`. Refer to the [reMarkableWiki](https://remarkablewiki.com/tips/splashscreens) on how to make your own.  
   To get started, you can also try [these custom screens](https://github.com/snototter/retweaks/tree/master/splash-screens).
 
 #### Miscellaneous (Linux)
