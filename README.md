@@ -113,7 +113,3 @@ Version `v1.0` provides all initially planned features for `reMass`:
 * [x] Restart UI
 * [x] Set the timezone
 * [x] Adjust the hostname
-
-TODOs
-* [ ] Update screenshots
-* [ ] Prepare launcher/.desktop
