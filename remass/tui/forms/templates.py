@@ -25,6 +25,8 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
             "^X": self.exit_application,
             "^B": self._to_main
         })
+        self.lbl_remote = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
+        add_empty_row(self)
         self.lbl_backups = self.add(nps.Textfield, value='', editable=False, color='STANDOUT')
         add_empty_row(self)
         self.btn_load = self.add(nps.ButtonPress, name='[Download Templates From Tablet]', relx=3,
@@ -41,11 +43,14 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
     
     def _update_widgets(self):
         backed_up = self._organizer.load_backedup_templates()
-        lbl = f'Templates available local for Export: {len(backed_up)}'
+        lbl = f'Templates available on PC: {len(backed_up)}'
         self.lbl_backups.value = lbl
 
+        remote = self._organizer.load_remote_templates()
+        self.lbl_remote.value = f'Templates available on Tablet: {len(remote)}'
+
         uploadable = self._organizer.load_uploadable_templates()
-        lbl = f'Templates available for Upload: {len(uploadable)}'
+        lbl = f'Custom Templates for Upload: {len(uploadable)}'
         self.lbl_uploads.value = lbl
 
         

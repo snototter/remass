@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import tempfile
+from functools import cmp_to_key
 from pathlib import PurePosixPath
 from typing import Dict, List
 from .config import RemassConfig, latest_backup_filename, next_backup_filename
@@ -54,7 +55,7 @@ class TemplateOrganizer(object):
             # Load the tablet's templates.json
             with open(temp_tpljson, 'r') as jf:
                 tablet_config = json.load(jf)
-                return tablet_config['templates']
+                return sorted(tablet_config['templates'], key=lambda e: template_name(e))
 
     def load_backedup_templates(self):
         """Loads the templates from the latest backed up 'templates.json' file."""
@@ -63,7 +64,7 @@ class TemplateOrganizer(object):
             return list()
         with open(tpl_json, 'r') as jf:
             tcfg = json.load(jf)
-            return tcfg['templates']
+            return sorted(tcfg['templates'], key=lambda e: template_name(e))
 
     def load_uploadable_templates(self):
         """Loads all custom templates which are uploadable, i.e. there must be:
@@ -83,7 +84,7 @@ class TemplateOrganizer(object):
                     png_fn = os.path.join(self._cfg.template_dir, e['filename'] + '.png')
                     if os.path.exists(svg_fn) and os.path.exists(png_fn):
                         tpls.append(e)
-        return tpls
+        return sorted(tpls, key=lambda e: template_name(e))
 
     def synchronize(self, templates_to_add: List[Dict] = list(), replace_templates: bool = False,
                     templates_to_disable: list = list(), backup_template_json: bool = True):
