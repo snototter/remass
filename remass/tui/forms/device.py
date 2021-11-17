@@ -11,7 +11,7 @@ from ...config import RemassConfig
 def get_local_time() -> Tuple[str, str]:
     """Returns the current datetime string and timezone."""
     current_time = datetime.datetime.now(datetime.timezone.utc).astimezone()
-    return current_time.strftime('%Y-%m-%d %T %Z'), current_time.strftime('%Z')
+    return current_time.strftime('%Y-%m-%d %H:%M %Z'), current_time.strftime('%Z')
 
 
 class DeviceSettingsForm(nps.ActionFormMinimal):

@@ -278,7 +278,7 @@ class TabletConnection(object):
 
     def get_remote_time(self) -> str:
         """Returns a string representation of the tablet's current date & time."""
-        return ssh_cmd_output(self._client, 'date +"%Y-%m-%d %T %Z"')
+        return ssh_cmd_output(self._client, 'date +"%Y-%m-%d %H:%M %Z"')
 
     def set_remote_timezone(self, tz: str) -> None:
         """Changes the tablet's timezone to the given 'tz' string, e.g. 'UTC', 
