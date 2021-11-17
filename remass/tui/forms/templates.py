@@ -4,7 +4,7 @@ import os
 
 from ..utilities import add_empty_row
 from ...tablet import TabletConnection
-from ...config import RemassConfig
+from ...config import RemassConfig, abbreviate_user
 from ...templates import TemplateOrganizer, template_name
 
 
@@ -69,9 +69,12 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
 
     def _upload_templates(self, *args, **kwargs):
         to_upload = [self._uploadable[i] for i in self.select_uploads.value]
-        self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True,
-                                    backup_template_json=False)
-        self._update_widgets()
+        if len(to_upload) > 0:
+            self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True,
+                                        backup_template_json=False)
+            nps.notify_confirm("Templates have been uploaded.",
+                               title='Info', form_color='STANDOUT', editw=1)
+            self._update_widgets()
 
     def _restart_ui(self, *args, **kwargs):
         self._connection.restart_ui()
@@ -126,8 +129,13 @@ class TemplateRemovalForm(nps.ActionFormMinimal):
 
     def _synchronize_selection(self, *args, **kwargs):
         to_disable = [self._remote_templates[i] for i in range(len(self._remote_templates)) if i not in self.select_templates.value]
-        self._organizer.synchronize(templates_to_disable=to_disable,
-                                    backup_template_json=True)
+        if len(to_disable) > 0:
+            fn = self._organizer.synchronize(templates_to_disable=to_disable,
+                                             backup_template_json=True)
+            nps.notify_confirm("Templates have been disabled.\n"
+                               "Original template configuration was backed up at:\n"
+                               f"{abbreviate_user(fn)}",
+                               title='Info', form_color='STANDOUT', editw=1)
         self._update_widgets()
 
     def exit_application(self, *args, **kwargs):

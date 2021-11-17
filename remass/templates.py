@@ -100,9 +100,12 @@ class TemplateOrganizer(object):
                                will NOT be deleted from the tablet
         :backup_template_json: if True, a backup of the tablet's original templates.json
                                file will be stored in our local app directory
+        
+        :return: Path to the backed up template configuration if backup_template_json is True,
+                 otherwise None
         """
         if len(templates_to_add) == 0 and len(templates_to_disable) == 0:
-            return
+            return None
         with tempfile.TemporaryDirectory() as temp_dir:
             # Download the tablet's templates.json
             temp_tpljson = os.path.join(temp_dir, 'templates.json')
@@ -110,11 +113,12 @@ class TemplateOrganizer(object):
             # Load the tablet's templates.json
             with open(temp_tpljson, 'r') as jf:
                 tablet_config = json.load(jf)
+            tpl_fn_backup = None
             if backup_template_json:
                 # Store the downloaded templates.json into the remass backup
                 # folder, in case we need/want to restore it later on
-                bfn = next_backup_filename('templates.json', self._cfg.template_backup_dir)
-                shutil.copyfile(temp_tpljson, bfn)
+                tpl_fn_backup = next_backup_filename('templates.json', self._cfg.template_backup_dir)
+                shutil.copyfile(temp_tpljson, tpl_fn_backup)
 
             # Collect files to upload and adjust the tablet's config for the
             # requested uploads:
@@ -157,3 +161,4 @@ class TemplateOrganizer(object):
                 self._connection.upload_file(src, dst)
             # Restart tablet UI to force reloading the changed templates
             self._connection.restart_ui()
+            return tpl_fn_backup
