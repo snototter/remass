@@ -61,6 +61,14 @@ python -m pip install https://github.com/snototter/remass/tarball/master
 # Now use it
 python -m remass
 ```
+Optionally, adjust the `./standalone/remass.desktop` file and add a launcher to your menu:
+```bash
+# Verify .desktop file before installation:
+desktop-file-validate standalone/remass.desktop
+
+# Install for current user only:
+desktop-file-install standalone/remass.desktop --dir ~/.local/share/applications/
+```
 
 #### First Steps
 * **Paths:** by default, `reMass` uses `$XDG_CONFIG_HOME/remass/` (refer to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/latest/ar01s03.html)) to store its configuration and `$XDG_DATA_HOME/remass` to store data.  

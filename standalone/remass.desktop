@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=reMass
+Comment=reMarkable Assistent
+Exec=PATH/TO/REMASS/venv/bin/python -m remass
+Type=Application
+Terminal=true
+Icon=PATH/TO/REMASS/standalone/remass.svg
+Categories=Office;
+StartupWMClass=remass
