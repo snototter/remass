@@ -139,7 +139,8 @@ class PageRange(nps.Textfield):
         if len(self.value) == 0:
             return None
         tokens = self.value.replace(';', ',').split(',')
-        return [_parse_range_token(token) for token in tokens]
+        ranges = [_parse_range_token(token) for token in tokens]
+        return [r for r in ranges if r is not None]
 
 
 class TitlePageRange(nps.TitleText):

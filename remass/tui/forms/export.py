@@ -27,12 +27,15 @@ class ExportForm(nps.ActionFormMinimal):
         # keep suggesting a suitable filename based on the selected (remote) notebook
         self.auto_replace_local_filename = True  # Flag indicating if we're still allowed to auto-replace
         self.prev_auto_replaced_filename = None  # Needed because a widget's when_value_changed is also triggered if the user just skips over the widget
+        self.notification_txt = ''
         super().__init__(*args, **kwargs)
 
     def on_ok(self):
         self._to_main()
 
-    def create(self):
+    def create(self, *args, **kwargs):
+        super().create(*args, **kwargs)
+        self.keypress_timeout = 2
         self.add_handlers({
             "^X": self.exit_application,
             "^B": self._to_main,
@@ -72,6 +75,11 @@ class ExportForm(nps.ActionFormMinimal):
                                      step=1, out_of=100, label=True, value=0,
                                      max_height=3)
         self._toggle_widgets(True)
+    
+    def while_waiting(self):
+        if not self.is_exporting and len(self.notification_txt) > 0:
+            nps.notify_confirm(self.notification_txt, title="Info", editw=1)
+            self.notification_txt = ''
 
     def _on_remote_file_selected(self):
         if self.auto_replace_local_filename:
@@ -102,8 +110,20 @@ class ExportForm(nps.ActionFormMinimal):
             nps.notify_confirm("You must select an output file!",
                                title='Error', form_color='CAUTION', editw=1)
             return False
-        # Disable all inputs
-        self._toggle_widgets(False)
+        # Parse page range input
+        pages = self.rendering_pages.pages
+        if len(pages) == 0:
+            nps.notify_confirm("You must enter a valid page range value.",
+                                title='Error', form_color='CAUTION', editw=1)
+            return False
+        # Parse DPI input
+        try:
+            dpi = int(self.rendering_dpi.value)
+        except ValueError:
+            nps.notify_confirm("You must enter a valid (integer) DPI value.",
+                                title='Error', form_color='CAUTION', editw=1)
+            return False
+        # Reset progress bar
         self._rendering_progress_callback(0)
         if nps.notify_ok_cancel('Do you really want to export:\n'
                                 f"    '{self.select_tablet.value.hierarchy_name}'\nto\n"
@@ -111,10 +131,15 @@ class ExportForm(nps.ActionFormMinimal):
                                 '\n------------------------------------------------------\n'
                                 'This form will be >locked< until completion.',
                                 title='Confirmation', editw=1):  # Select 'cancel' by default (to prevent premature export start)
+            # Disable all inputs
+            self._toggle_widgets(False)
             self.is_exporting = True
             self.export_thread = threading.Thread(target=self._export_blocking,
                                                 args=(self.select_tablet.value, 
-                                                        self.select_local.filename,))
+                                                      self.select_local.filename,
+                                                      self.rendering_template_alpha.alpha,
+                                                      self.rendering_expand_pages.value,
+                                                      pages, self.rendering_png.value, dpi))
             self.export_thread.start()
         return True
 
@@ -176,22 +201,20 @@ class ExportForm(nps.ActionFormMinimal):
             self._added_buttons['ok_button'].editable = editable
             self._added_buttons['ok_button'].display()
 
-    def _export_blocking(self, rm_file, output_filename):
+    def _export_blocking(self, rm_file, output_filename, alpha, expand_pages, pages, export_png, dpi):
         self._connection.render_document(rm_file, output_filename,
                                          self._rendering_progress_callback,
-                                         template_alpha=self.rendering_template_alpha.alpha,
-                                         expand_pages=self.rendering_expand_pages.value,
+                                         template_alpha=alpha,
+                                         expand_pages=expand_pages,
                                         #  only_annotated=self.rendering_only_annotated.value
-                                         page_selection=self.rendering_pages.pages,
-                                         template_path=self._cfg.template_dir
-                                         )
-        if self.rendering_png.value:
+                                         page_selection=pages,
+                                         template_path=self._cfg.template_dir)
+        if export_png:
             output_folder = os.path.dirname(output_filename)
             notification_suffix = '\n------------------------------------------------------\n'\
                                   f"\nPNGs have been exported to\n"\
                                   f"  '{abbreviate_user(output_folder)}'"
             fname = os.path.splitext(os.path.basename(output_filename))[0]
-            dpi = int(self.rendering_dpi.value)
             fmt = 'png'
             _ = convert_from_path(output_filename, output_folder=output_folder,
                                   dpi=dpi, fmt=fmt, paths_only=True,
@@ -199,16 +222,12 @@ class ExportForm(nps.ActionFormMinimal):
                                   output_file=counter_generator(fname + '-', padding_goal=4))
         else:
             notification_suffix = ''
+        self.notification_txt = f"Successfully exported\n  '{rm_file.hierarchy_name}'\nto\n"\
+                                f"  '{abbreviate_user(output_filename)}'{notification_suffix}"
         self.is_exporting = False
         # Re-enable all widgets & notify the user (as we blocked all user 
         # inputs, this works from within this export thread, too)
         self._toggle_widgets(True)
-        nps.notify(f"Successfully exported\n  '{rm_file.hierarchy_name}'\nto\n"
-                   f"  '{abbreviate_user(output_filename)}'{notification_suffix}",
-                   title='Info', form_color='STANDOUT')
-        curses.napms(3000)
-        curses.flushinp()
-        self.display(clear=True)
 
     def _rendering_progress_callback(self, percentage):
         self.progress_bar.value = percentage
