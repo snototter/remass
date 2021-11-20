@@ -18,7 +18,7 @@ RM_TEMPLATE_JSON_PATH = '/usr/share/remarkable/templates/templates.json'
 def template_name(tpl: dict) -> str:
     """Returns a displayable name for the given template configuration"""
     if 'landscape' in tpl:
-        return tpl['name'] + (' Landscape' if tpl['landscape'] else ' Portrait')
+        return tpl['name'] + (' (Landscape)' if tpl['landscape'] else ' (Portrait)')
     return tpl['name']
 
 
