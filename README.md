@@ -8,7 +8,7 @@ If you're unexperienced at using the command line or are afraid of breaking some
 This is not an official reMarkable&reg; product, and I am not affiliated with reMarkable AS in any way.  
 
 This utility is offered without any warranty.
-I release this utility in the hope that it is helpful to others, but I can make no guarantee that it works as intended.
+It is released in the hope that it might be helpful to others, but I can make no guarantee that it works as intended.
 There might be bugs, you may lose data, your device may crash, etc.
 
 ## TUI Demo
