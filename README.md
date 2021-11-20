@@ -37,8 +37,8 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
 
 ## Setup
 #### System Prerequisites & Caveats:
-This utility should work on any Unix-like platform (as it requires `curses`). It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS). _If there are prerequisites missing for your platform, please let me know._
-* `reMass` uses a [fork]([`rmrl`](https://github.com/snototter/rmrl)) of [`rmrl`](https://github.com/rschroll/rmrl) to export PDFs. `rmrl` requires Python 3.7 or later.  
+* `reMass` requires `curses` and thus, should work on any Unix-like platform. It is only tested on Linux (Ubuntu 18.04 &amp; 20.04 LTS).
+* `reMass` uses a [fork]([`rmrl`](https://github.com/snototter/rmrl)) of [`rmrl`](https://github.com/rschroll/rmrl) to export PDFs. `rmrl` requires Python 3.7 or later.
   * On Ubuntu 20.04, Python 3.8 is the default version (at the time of writing).  
   * On Ubuntu 18.04, Python 3.6 is the default version, thus you have to install a newer version, e.g.  
     `sudo apt install python3.8 python3.8-venv`
@@ -47,26 +47,26 @@ This utility should work on any Unix-like platform (as it requires `curses`). It
 * **Limitations:** Currently, `rmrl` doesn't support fine-grained textures for pencils and paintbrushes (all other pen styles render nicely).
 
 #### Install reMass
-The easiest way is to install `reMass` directly from github into a `virtualenv`:
-```bash
-# Set up & activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate
+* The easiest way is to install `reMass` directly from github into a `virtualenv`:
+  ```bash
+  # Set up & activate a virtual environment
+  python3 -m venv venv
+  source venv/bin/activate
 
-# Install reMass
-python -m pip install https://github.com/snototter/remass/tarball/master
+  # Install reMass
+  python -m pip install https://github.com/snototter/remass/tarball/master
 
-# Now use it
-python -m remass
-```
-Optionally, adjust the `./standalone/remass.desktop` file and add a launcher to your menu:
-```bash
-# Verify .desktop file before installation:
-desktop-file-validate standalone/remass.desktop
+  # Now use it
+  python -m remass
+  ```
+* Optionally, adjust and install `./standalone/remass.desktop`:
+  ```bash
+  # Verify .desktop file before installation:
+  desktop-file-validate standalone/remass.desktop
 
-# Install for current user only:
-desktop-file-install standalone/remass.desktop --dir ~/.local/share/applications/
-```
+  # Install for current user only:
+  desktop-file-install standalone/remass.desktop --dir ~/.local/share/applications/
+  ```
 
 #### First Steps
 * **Paths:** by default, `reMass` uses `$XDG_CONFIG_HOME/remass/` (refer to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/latest/ar01s03.html)) to store its configuration and `$XDG_DATA_HOME/remass` to store data.  
