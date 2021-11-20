@@ -23,7 +23,7 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
 <img src="https://github.com/snototter/remass/blob/master/screenshots/export.jpg?raw=true" alt="PDF/PNG Export" width="50%"/>
 
 #### Template Up-/Download
-TODO doc + screenshot
+<img src="https://github.com/snototter/remass/blob/master/screenshots/templates1.jpg?raw=true" alt="PDF/PNG Export" width="50%"/>
 
 #### Template Removal
 <img src="https://github.com/snototter/remass/blob/master/screenshots/templates2.jpg?raw=true" alt="PDF/PNG Export" width="50%"/>
@@ -110,14 +110,3 @@ desktop-file-install standalone/remass.desktop --dir ~/.local/share/applications
   # Change via xdg-mime, e.g. use 'nemo' as default file browser
   xdg-mime default nemo.desktop inode/directory
   ```
-
-## Status
-Version `v1.0` provides all initially planned features for `reMass`:
-* [x] Export notebooks (PDF & PNG)
-* [x] Change splash screens
-* [x] Upload custom templates
-* [x] Disable/remove templates
-* [x] Reboot the tablet
-* [x] Restart UI
-* [x] Set the timezone
-* [x] Adjust the hostname

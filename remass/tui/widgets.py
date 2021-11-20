@@ -37,9 +37,6 @@ class CustomFilenameCombo(nps.FilenameCombo):
         self.initial_folder = initial_folder
         super().__init__(screen, *args, **kwargs)
         self.when_value_edited_cb = when_value_edited_cb
-        # self.add_handlers({
-        #     curses.ascii.ESC:  self.h_exit_escape
-        # })#TODO check how we can abort the file selection by ESC (this likely needs a custom selector form :-/ )
 
     def when_value_edited(self):
         if self.when_value_edited_cb is not None:
