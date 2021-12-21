@@ -72,7 +72,7 @@ class TemplateSynchronizationForm(nps.ActionFormMinimal):
         if len(to_upload) > 0:
             self._organizer.synchronize(templates_to_add=to_upload, replace_templates=True,
                                         backup_template_json=False)
-            nps.notify_confirm("Templates have been uploaded.",
+            nps.notify_confirm("Templates have been uploaded.\nRestarting UI now.",
                                title='Info', form_color='STANDOUT', editw=1)
             self._update_widgets()
 

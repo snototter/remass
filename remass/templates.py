@@ -129,7 +129,7 @@ class TemplateOrganizer(object):
                 src_png = os.path.join(self._cfg.template_dir, tpl['filename'] + '.png')
                 if os.path.exists(src_svg) and os.path.exists(src_png):
                     dst_svg = str(PurePosixPath(RM_TEMPLATE_PATH, tpl['filename'] + '.svg'))
-                    dst_png = str(PurePosixPath(RM_TEMPLATE_PATH, tpl['filename'] + '.svg'))
+                    dst_png = str(PurePosixPath(RM_TEMPLATE_PATH, tpl['filename'] + '.png'))
                     add = False
                     # Update the tablet's config:
                     if _exists_custom_template(tpl, tablet_config):
