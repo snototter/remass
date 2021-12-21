@@ -124,7 +124,7 @@ def is_valid_hostname(hostname: str) -> bool:
 
 def ssh_cmd_output(client: paramiko.SSHClient, cmd: str) -> str:
     """Executes the given command on the remote and returns its stdout"""
-    _, out, _ = client.exec_command(cmd)
+    _in, out, _err = client.exec_command(cmd)
     return out.read().decode("utf-8").strip()
 
 
@@ -163,16 +163,18 @@ class TabletConnection(object):
             self._client.close()
 
     def restart_ui(self) -> None:
-        ssh_cmd_output(self._client, 'systemctl restart xochitl')
+        ssh_cmd_output(self._client, '/bin/systemctl restart xochitl')
 
     def reboot_tablet(self) -> None:
-        ssh_cmd_output(self._client, 'reboot')
+        ssh_cmd_output(self._client, '/sbin/reboot')#FIXME which reboot?
 
     def get_tablet_model(self) -> str:
-        return ssh_cmd_output(self._client, "cat /sys/devices/soc0/machine")
+        return ssh_cmd_output(self._client, "/bin/cat /sys/devices/soc0/machine")
     
     def get_firmware_version(self) -> str:
         version_map = {
+            "20211208075454": "rm2 v2.11.0.442",
+            "20211208080907": "rm1 v2.11.0.442",
             "20211102143141": "rM2 v2.10.3.379",
             "20211102142308": "rM1 v2.10.3.379",
             "20211014151303": "rM2 v2.10.2.356",
@@ -192,38 +194,38 @@ class TabletConnection(object):
             "20210311194323": "rM2 v2.6.1.71",
             "20210311193614": "rM1 v2.6.1.71"
         }
-        vstr = ssh_cmd_output(self._client, "cat /etc/version")
+        vstr = ssh_cmd_output(self._client, "/bin/cat /etc/version")
         return version_map.get(vstr, vstr)
 
     def get_hostname(self) -> str:
-        return ssh_cmd_output(self._client, "cat /etc/hostname")
+        return ssh_cmd_output(self._client, "/bin/cat /etc/hostname")
 
     def set_hostname(self, hostname: str) -> bool:
         hostname = hostname.strip()
         if not is_valid_hostname(hostname):
             return False
-        ssh_cmd_output(self._client, f'hostnamectl set-hostname "{hostname}"')
+        ssh_cmd_output(self._client, f'/usr/bin/hostnamectl set-hostname "{hostname}"')
         return True
 
     def get_free_space_str(self, location: str = '/') -> str:
-        return ssh_cmd_output(self._client, 'df -h ' + f'"{location}"' + " | tail -n1 | awk '{print $4 \" / \" $2}'")
+        return ssh_cmd_output(self._client, '/bin/df -h ' + f'"{location}"' + " | /usr/bin/tail -n1 | /usr/bin/awk '{print $4 \" / \" $2}'")
 
     def get_free_space_kb(self, location: str) -> int:
         try:
             # Use dirname on the remote (because the target file location may
             # not exist, which would cause df to not find the corresponding
             # mounting point)
-            return int(ssh_cmd_output(self._client, f"df $(dirname \"{location}\") | tail -n1 | awk '{{print $4}}'"))
+            return int(ssh_cmd_output(self._client, f"/bin/df $(dirname \"{location}\") | /usr/bin/tail -n1 | /usr/bin/awk '{{print $4}}'"))
         except ValueError:
             raise NotEnoughDiskSpaceError(f'Cannot determine free space for location "{location}"')
 
     def get_uptime(self) -> str:
-        return format_uptime(ssh_cmd_output(self._client, 'uptime'))
+        return format_uptime(ssh_cmd_output(self._client, '/usr/bin/uptime'))
 
     def get_battery_info(self) -> Tuple[str, str, str]:
-        capacity = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/capacity"))
-        health = ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/health")
-        temp = int(ssh_cmd_output(self._client, "cat /sys/class/power_supply/*_battery/temp"))/10
+        capacity = int(ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/capacity"))
+        health = ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/health")
+        temp = int(ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/temp"))/10
         return (f'{capacity:d}%', health, f'{temp:.1f}°C')
 
     def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
@@ -278,14 +280,14 @@ class TabletConnection(object):
 
     def get_remote_time(self) -> str:
         """Returns a string representation of the tablet's current date & time."""
-        return ssh_cmd_output(self._client, 'date +"%Y-%m-%d %H:%M %Z"')
+        return ssh_cmd_output(self._client, '/bin/date +"%Y-%m-%d %H:%M %Z"')
 
     def set_remote_timezone(self, tz: str) -> None:
         """Changes the tablet's timezone to the given 'tz' string, e.g. 'UTC', 
         'CET', etc. You have to ensure that you provide the non-DST timezone,
         i.e. 'CET' instead of 'CEST'!
         """
-        ssh_cmd_output(self._client, f'timedatectl set-timezone "{tz}"')
+        ssh_cmd_output(self._client, f'/usr/bin/timedatectl set-timezone "{tz}"')
 
     def is_connected(self) -> bool:
         # Returns True if the client is still connected and the session is
