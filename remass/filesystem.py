@@ -330,6 +330,8 @@ class RemoteFileSystemSource(object):
 def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filename: str,
                   progress_cb: Callable[[float], None], **kwargs):
     """Uses the SSH connection to render the given notebook remotely."""
+    if progress_cb is None:
+        progress_cb = lambda x: None
     sftp = client.open_sftp()
     src = RemoteFileSystemSource(sftp, rm_file.uuid)
     render_output = render(src, progress_cb=progress_cb, **kwargs)
