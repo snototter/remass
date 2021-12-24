@@ -49,11 +49,13 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
 #### Install reMass
 * The easiest way is to install `reMass` directly from github into a `virtualenv`:
   ```bash
-  # Set up & activate a virtual environment
+  # Set up & activate a virtual environment (requires python >= 3.7)
   python3 -m venv venv
   source venv/bin/activate
 
   # Install reMass
+  python -m pip install git+https://github.com/snototter/rmrl.git
+  # or
   python -m pip install https://github.com/snototter/remass/tarball/master
 
   # Now use it
