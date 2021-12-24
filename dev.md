@@ -20,5 +20,11 @@ python -m remass.fileselect --bp path/to/backup/xochitl/
 
 ### File hierarchy parsing
 python -m remass.filesystem path/to/backup/xochitl/
+
+### Dev/debug functionality without TUI:
+python -m remass.dev -h
+# --list          List all files
+# --search foo    Find all files which contain *foo*
+# --export UUID   Export the corresponding notebook
 ```
 
