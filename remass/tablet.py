@@ -248,15 +248,15 @@ class TabletConnection(object):
         sftp.close()
 
     def download_templates(self, dst_folder: str):
-        """Downloads all SVG templates and the templates.json configuration
-        from the tablet to our appdir's backup folder."""
+        """Downloads all SVG templates, their PNG thumbnails and the
+        templates.json configuration from the tablet to the given dst_folder."""
         sftp = self._client.open_sftp()
-        # Download all SVG templates
         rm_template_dir = '/usr/share/remarkable/templates'
         for fname in sftp.listdir(rm_template_dir):
-            if not fname.lower().endswith('.svg'):
+            if not (fname.lower().endswith('.svg') or fname.lower().endswith('.png')):
                 continue
-            sftp.get(str(PurePosixPath(rm_template_dir, fname)), os.path.join(dst_folder, fname))
+            sftp.get(str(PurePosixPath(rm_template_dir, fname)),
+                     os.path.join(dst_folder, fname))
         # Also back up the configuration JSON
         cfg_backup = next_backup_filename('templates.json', dst_folder)
         sftp.get(str(PurePosixPath(rm_template_dir, 'templates.json')), cfg_backup)

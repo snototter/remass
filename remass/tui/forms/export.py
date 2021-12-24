@@ -208,7 +208,7 @@ class ExportForm(nps.ActionFormMinimal):
                                          expand_pages=expand_pages,
                                         #  only_annotated=self.rendering_only_annotated.value
                                          page_selection=pages,
-                                         template_path=self._cfg.template_dir)
+                                         template_path=self._cfg.template_backup_dir)
         if export_png:
             output_folder = os.path.dirname(output_filename)
             notification_suffix = '\n------------------------------------------------------\n'\
