@@ -53,10 +53,15 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
   python3 -m venv venv
   source venv/bin/activate
 
+  # Update pip & setuptools
+  python -m pip install -U pip setuptools
+
+
   # Install reMass
-  python -m pip install git+https://github.com/snototter/rmrl.git
+  python -m pip install git+https://github.com/snototter/remass.git
   # or
   python -m pip install https://github.com/snototter/remass/tarball/master
+
 
   # Now use it
   python -m remass
