@@ -172,7 +172,16 @@ class TabletConnection(object):
         return ssh_cmd_output(self._client, "/bin/cat /sys/devices/soc0/machine")
     
     def get_firmware_version(self) -> str:
+        # We can look up the version strings from ddvk's awesome
+        # remarkable-hacks:
+        # https://github.com/ddvk/remarkable-hacks/blob/master/patch.sh
         version_map = {
+            "20220330134519": "rM2 2.12.3.606",
+            "20220330140034": "rM1 2.12.3.606",
+            "20220303120824": "rM2 2.12.2.573",
+            "20220303122245": "rM1 2.12.2.573",
+            "20220202133838": "rM2 2.12.1.527",
+            "20220202133055": "rM1 2.12.1.527",
             "20211208075454": "rm2 v2.11.0.442",
             "20211208080907": "rm1 v2.11.0.442",
             "20211102143141": "rM2 v2.10.3.379",
