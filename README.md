@@ -66,7 +66,7 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
   # Now use it
   python -m remass
   ```
-* Optionally, adjust and install `./standalone/remass.desktop`:
+* Optionally, adjust and install the application launcher provided at `./standalone/remass.desktop`:
   ```bash
   # Verify .desktop file before installation:
   desktop-file-validate standalone/remass.desktop
@@ -76,7 +76,7 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
   ```
 
 #### First Steps
-* **Paths:** by default, `reMass` uses `$XDG_CONFIG_HOME/remass/` (refer to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/latest/ar01s03.html)) to store its configuration and `$XDG_DATA_HOME/remass` to store data.  
+* **Paths:** by default, `reMass` uses `$XDG_CONFIG_HOME/remass/` (standard Unix path, refer to the [XDG base directory specification](https://specifications.freedesktop.org/basedir-spec/latest/ar01s03.html) for more details) to store its configuration and `$XDG_DATA_HOME/remass` to store data.  
   You can change these paths via command line arguments, see the provided help:
   ```bash
   python -m remass -h
@@ -115,3 +115,4 @@ After [setup](#setup), you can run `reMass` via `python -m remass`. The followin
   # Change via xdg-mime, e.g. use 'nemo' as default file browser
   xdg-mime default nemo.desktop inode/directory
   ```
+
