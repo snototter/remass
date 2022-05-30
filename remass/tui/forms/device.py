@@ -8,10 +8,43 @@ from ...tablet import TabletConnection
 from ...config import RemassConfig
 
 
+def tz_dst2std(tzstr: str) -> str:
+    """Return the standard time zone abbreviation for the given
+    timezone abbreviation. Needed, because we cannot use DST abbreviations
+    when setting the timezone via timedatectl on the tablet.
+
+    Using DST-to-STD mappings from:
+    https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    except for GMT --> IST (Irish Std Time)
+    """
+    mapping = {
+        'ACDT': 'ACST',
+        'ADT': 'AST',
+        'AEDT': 'AEST',
+        'AKDT': 'AKST',
+        'BST': 'GMT',
+        'CDT': 'CST',
+        'CEST': 'CET',
+        'EDT': 'EST',
+        'EEST': 'EET',
+        'HDT': 'HST',
+        'IDT': 'IST',
+        'MDT': 'MST',
+        'NDT': 'NST',
+        'NZDT': 'NZST',
+        'PDT': 'PST',
+        'WEST': 'WET'
+    }
+    if tzstr in mapping:
+        return mapping[tzstr]
+    else:
+        return tzstr
+
+
 def get_local_time() -> Tuple[str, str]:
     """Returns the current datetime string and timezone."""
     current_time = datetime.datetime.now(datetime.timezone.utc).astimezone()
-    return current_time.strftime('%Y-%m-%d %H:%M %Z'), current_time.strftime('%Z')
+    return current_time.strftime('%Y-%m-%d %H:%M %Z'), tz_dst2std(current_time.strftime('%Z'))
 
 
 class DeviceSettingsForm(nps.ActionFormMinimal):

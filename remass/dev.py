@@ -56,6 +56,7 @@ def export(args):
                                        template_path=cfg.template_backup_dir)
     connection.close()
 
+
 if __name__ == '__main__':
     # Verbose logging heavily interferes with npyscreen. Thus, restrict it to
     # warning/error levels only.
