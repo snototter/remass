@@ -86,11 +86,15 @@ class TitleCustomFilenameCombo(nps.TitleCombo):
         return self.entry_widget.filename
 
 
+def _parse_number(token: str) -> int:
+    if token == '*':
+        return -1
+
 def _parse_range_token(token: str) -> Tuple[int, int]:
     """Parses an input range token:
-    '*' or '-': (1, -1), i.e. representing the whole range
+    '*': (1, -1), i.e. representing the whole range
     X-Y: (X, Y)
-    -Y:  (1, Y)
+    -Y:  (-Y, -Y)
     X-:  (X, -1)
     """
     try:
@@ -101,7 +105,13 @@ def _parse_range_token(token: str) -> Tuple[int, int]:
             match = re.match(r"([-+]?\d+)?-([-+]?\d+)?", token)
             if match is None:
                 return None
-            return (int(match[1]) if match[1] is not None else 1,
+            if (match[1] is None) and (match[2] is not None):
+                # Single negative number, e.g. "-3"
+                val = -int(match[2])
+                return (val, val)
+            else:
+                return (
+                    int(match[1]) if match[1] is not None else 1,
                     int(match[2]) if match[2] is not None else -1)
         else:
             return (int(token), int(token))

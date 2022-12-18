@@ -327,8 +327,9 @@ class RemoteFileSystemSource(object):
             return False
 
 
-def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filename: str,
-                  progress_cb: Callable[[float], None], **kwargs):
+def render_remote(
+        client: paramiko.SSHClient, rm_file: RDocument, output_filename: str,
+        progress_cb: Callable[[float], None], **kwargs) -> bool:
     """Uses the SSH connection to render the given notebook remotely."""
     if progress_cb is None:
         progress_cb = lambda x: None
@@ -338,10 +339,11 @@ def render_remote(client: paramiko.SSHClient, rm_file: RDocument, output_filenam
     sftp.close()
     pdf_stream = PdfReader(render_output)
     if pdf_stream is not None:
-        pdf_stream.Info = IndirectPdfDict(Title=rm_file.visible_name,
-                                          Author=getpass.getuser(),
-                                          Subject='Exported Notes',
-                                          Creator='reMass')
+        pdf_stream.Info = IndirectPdfDict(
+            Title=rm_file.visible_name,
+            Author=getpass.getuser(),
+            Subject='Exported Notes',
+            Creator='reMass')
         PdfWriter(output_filename, trailer=pdf_stream).write()
         return True
     else:

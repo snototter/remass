@@ -11,6 +11,7 @@ from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesyste
 from .config import next_backup_filename
 from pathlib import PurePosixPath
 
+
 class NotEnoughDiskSpaceError(Exception):
     pass
 
@@ -32,28 +33,36 @@ class SplashScreenUtil(object):
     RM_SCREEN_PATH = '/usr/share/remarkable/'
 
     @classmethod
-    def tablet_filename(cls, screen: Union[Tuple[str, str], str]):
+    def tablet_screen_filename(cls, screen: Union[Tuple[str, str], str]):
+        """
+        Returns the path to the screen image.
+        """
         if isinstance(screen, str):
-            return str(PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen))
+            return str(
+                PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen))
         else:
-            return str(PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen[0]))
+            return str(
+                PurePosixPath(SplashScreenUtil.RM_SCREEN_PATH, screen[0]))
 
 
     @classmethod
-    def validate_custom_screen(cls, filename: str) -> bool:
-        """Checks if the given image file can be used as a custom splash screen."""
+    def validate_custom_screen(cls, filename: str) -> Tuple[bool, str]:
+        """
+        Checks if the given image file can be used as a custom splash screen.
+        """
         if not filename.lower().endswith('.png'):
-            return False, 'File must be a PNG.'
+            return (False, 'File must be a PNG.')
         image = Image.open(filename)
         if image.mode not in ['L', 'LA', 'RGB', 'RGBA']:
-            return False, 'Image must be 8bit luminance/rgb (plus optional alpha).'
+            return (False, 'Image must be 8bit luminance/rgb (plus optional alpha).')
         if image.size != (1404, 1872):
-            return False, 'Resolution must be 1404x1872.'
-        return True, ''
+            return (False, 'Resolution must be 1404x1872.')
+        return (True, '')
 
 
-def format_timedelta(days: int = 0, hours: int = 0, minutes: int = 0,
-                     seconds: int = 0) -> str:
+def format_timedelta(
+        days: int = 0, hours: int = 0, minutes: int = 0,
+        seconds: int = 0) -> str:
     """Returns a simplified string representation of the given timedelta."""
     s = '' if days == 0 else f'{days:d}d'
     if hours > 0:
@@ -140,11 +149,10 @@ class TabletConnection(object):
         pkey = self._check_key()
         password = None if pkey is not None else self._cfg['password']
         user = self._cfg['user']
-        self._client.connect(host, username=user,
-                            password=password, pkey=pkey,
-                            timeout=self._cfg['timeout'],
-                            port=self._cfg['port'],
-                            look_for_keys=False)
+        self._client.connect(
+            host, username=user, password=password, pkey=pkey,
+            timeout=self._cfg['timeout'], port=self._cfg['port'],
+            look_for_keys=False)
         logging.getLogger(__name__).info(f'Connected to {self.get_tablet_model()}')
 
     def open(self) -> None:
@@ -228,42 +236,63 @@ class TabletConnection(object):
         hostname = hostname.strip()
         if not is_valid_hostname(hostname):
             return False
-        ssh_cmd_output(self._client, f'/usr/bin/hostnamectl set-hostname "{hostname}"')
+        ssh_cmd_output(
+            self._client,
+             f'/usr/bin/hostnamectl set-hostname "{hostname}"')
         return True
 
     def get_free_space_str(self, location: str = '/') -> str:
-        return ssh_cmd_output(self._client, '/bin/df -h ' + f'"{location}"' + " | /usr/bin/tail -n1 | /usr/bin/awk '{print $4 \" / \" $2}'")
+        return ssh_cmd_output(
+            self._client,
+            '/bin/df -h ' + f'"{location}"' + " | /usr/bin/tail -n1 | /usr/bin/awk '{print $4 \" / \" $2}'")
 
     def get_free_space_kb(self, location: str) -> int:
         try:
             # Use dirname on the remote (because the target file location may
             # not exist, which would cause df to not find the corresponding
             # mounting point)
-            return int(ssh_cmd_output(self._client, f"/bin/df $(dirname \"{location}\") | /usr/bin/tail -n1 | /usr/bin/awk '{{print $4}}'"))
+            return int(
+                ssh_cmd_output(
+                    self._client,
+                    f"/bin/df $(dirname \"{location}\") | /usr/bin/tail -n1 | /usr/bin/awk '{{print $4}}'"))
         except ValueError:
-            raise NotEnoughDiskSpaceError(f'Cannot determine free space for location "{location}"')
+            raise NotEnoughDiskSpaceError(
+                f'Cannot determine free space for location "{location}"')
 
     def get_uptime(self) -> str:
         return format_uptime(ssh_cmd_output(self._client, '/usr/bin/uptime'))
 
     def get_battery_info(self) -> Tuple[str, str, str]:
-        capacity = int(ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/capacity"))
-        health = ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/health")
-        temp = int(ssh_cmd_output(self._client, "/bin/cat /sys/class/power_supply/*_battery/temp"))/10
+        capacity = int(
+            ssh_cmd_output(
+                self._client,
+                "/bin/cat /sys/class/power_supply/*_battery/capacity"))
+        health = ssh_cmd_output(
+            self._client,
+            "/bin/cat /sys/class/power_supply/*_battery/health")
+        temp = int(
+            ssh_cmd_output(
+                self._client,
+                "/bin/cat /sys/class/power_supply/*_battery/temp")) / 10.0
         return (f'{capacity:d}%', health, f'{temp:.1f}°C')
 
-    def get_filesystem(self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
+    def get_filesystem(
+            self) -> Tuple[RCollection, RCollection, Dict[str, RDirEntry]]:
         return load_remote_filesystem(self._client)
 
-    def render_document_by_uuid(self, uuid: str, output_filename: str,
-                        progress_cb: Callable[[float], None], **kwargs) -> None:
-        _, _, dirents = load_remote_filesystem(self._client)
-        self.render_document(dirents[uuid], output_filename, progress_cb, **kwargs)
+    def render_document_by_uuid(
+            self, uuid: str, output_filename: str,
+            progress_cb: Callable[[float], None], **kwargs) -> None:
+        _root, _trash, dirents = load_remote_filesystem(self._client)
+        self.render_document(
+            dirents[uuid], output_filename, progress_cb, **kwargs)
 
-    def render_document(self, rm_file: RDocument, output_filename: str,
-                        progress_cb: Callable[[float], None], **kwargs) -> None:
+    def render_document(
+            self, rm_file: RDocument, output_filename: str,
+            progress_cb: Callable[[float], None], **kwargs) -> None:
         """kwargs will be passed to rmrl.render()"""
-        render_remote(self._client, rm_file, output_filename, progress_cb, **kwargs)
+        render_remote(
+            self._client, rm_file, output_filename, progress_cb, **kwargs)
 
     def download_file(self, remote_filename: str, local_filename: str):
         """Downloads a file from the tablet to your local disk."""
@@ -279,11 +308,13 @@ class TabletConnection(object):
         for fname in sftp.listdir(rm_template_dir):
             if not (fname.lower().endswith('.svg') or fname.lower().endswith('.png')):
                 continue
-            sftp.get(str(PurePosixPath(rm_template_dir, fname)),
-                     os.path.join(dst_folder, fname))
+            sftp.get(
+                str(PurePosixPath(rm_template_dir, fname)),
+                os.path.join(dst_folder, fname))
         # Also back up the configuration JSON
         cfg_backup = next_backup_filename('templates.json', dst_folder)
-        sftp.get(str(PurePosixPath(rm_template_dir, 'templates.json')), cfg_backup)
+        sftp.get(
+            str(PurePosixPath(rm_template_dir, 'templates.json')), cfg_backup)
         sftp.close()
 
     def upload_file(self, local_filename: str, remote_filename: str):
@@ -293,10 +324,11 @@ class TabletConnection(object):
         upload_bytes = os.path.getsize(local_filename) / 1024  # in KB
         free_space = self.get_free_space_kb(remote_filename)
         if upload_bytes + min_free_space >= free_space:
-            raise NotEnoughDiskSpaceError(f'Upload of "{local_filename}" ({upload_bytes} KB) '
-                                          f'to "{remote_filename}" '
-                                          f'would lead to less than {min_free_space} KB on '
-                                          f'partition (free: {free_space} KB).')
+            raise NotEnoughDiskSpaceError(
+                f'Upload of "{local_filename}" ({upload_bytes} KB) '
+                f'to "{remote_filename}" '
+                f'would lead to less than {min_free_space} KB on '
+                f'partition (free: {free_space} KB).')
         # Now it's safe to upload the file
         sftp = self._client.open_sftp()
         sftp.put(local_filename, remote_filename)
@@ -331,10 +363,13 @@ class TabletConnection(object):
         if self._cfg['keyfile'] is None:
             return None
         try:
-            pkey = paramiko.RSAKey.from_private_key_file(os.path.expanduser(self._cfg['keyfile']),
-                                                         password=self._cfg['password'])
+            pkey = paramiko.RSAKey.from_private_key_file(
+                os.path.expanduser(self._cfg['keyfile']),
+                password=self._cfg['password'])
         except paramiko.ssh_exception.PasswordRequiredException:
-            passphrase = getpass(f"Enter passphrase for private key \"{self._cfg['keyfile']}\": ")
-            pkey = paramiko.RSAKey.from_private_key_file(os.path.expanduser(self._cfg['keyfile']),
-                                                         password=passphrase)
+            passphrase = getpass(
+                f"Enter passphrase for private key \"{self._cfg['keyfile']}\": ")
+            pkey = paramiko.RSAKey.from_private_key_file(
+                os.path.expanduser(self._cfg['keyfile']),
+                password=passphrase)
         return pkey

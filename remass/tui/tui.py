@@ -61,43 +61,63 @@ class MainForm(nps.ActionFormMinimal):
             "^R": self._switch_form_template_del,
             "^S": self._switch_form_screens
         })
-        self._info_lbl = self.add(nps.Textfield, value="", editable=False, color='STANDOUT')
-        self._tablet_model = self.add(nps.TitleFixedText, name='Model',
-                                      begin_entry_at=24, relx=4,
-                                      value="", editable=False)
-        self._tablet_fwver = self.add(nps.TitleFixedText, name="Firmware",
-                                      begin_entry_at=24, relx=4,
-                                      value="", editable=False)
-        self._tablet_free_space_root = self.add(nps.TitleFixedText, name="Free space /",
-                                                begin_entry_at=24, relx=4,
-                                                value="", editable=False)
-        self._tablet_free_space_home = self.add(nps.TitleFixedText, name="Free space /home",
-                                                begin_entry_at=24, relx=4,
-                                                value="", editable=False)
-        self._tablet_battery_info = self.add(nps.TitleFixedText, name="Battery status",
-                                             value="", begin_entry_at=24,
-                                             relx=4, editable=False)
-        self._tablet_uptime = self.add(nps.TitleFixedText, name="Uptime", value="",
-                                       relx=4, begin_entry_at=24, editable=False)
+        self._info_lbl = self.add(
+            nps.Textfield, value="", editable=False, color='STANDOUT')
+        self._tablet_model = self.add(
+            nps.TitleFixedText, name='Model',
+            begin_entry_at=24, relx=4,
+            value="", editable=False)
+        self._tablet_fwver = self.add(
+            nps.TitleFixedText, name="Firmware",
+            begin_entry_at=24, relx=4,
+            value="", editable=False)
+        self._tablet_free_space_root = self.add(
+            nps.TitleFixedText, name="Free space at `/`",
+            begin_entry_at=24, relx=4,
+            value="", editable=False)
+        self._tablet_free_space_home = self.add(
+            nps.TitleFixedText, name="Free space at `/home`",
+            begin_entry_at=24, relx=4,
+            value="", editable=False)
+        self._tablet_battery_info = self.add(
+            nps.TitleFixedText, name="Battery status",
+            value="", begin_entry_at=24,
+            relx=4, editable=False)
+        self._tablet_uptime = self.add(
+            nps.TitleFixedText, name="Uptime", value="",
+            relx=4, begin_entry_at=24, editable=False)
         add_empty_row(self)
-        self.add(nps.Textfield, value='Utilities', editable=False, color='STANDOUT')
-        self.add(nps.ButtonPress, name='[Export Notebooks]', relx=3,
-                 when_pressed_function=self._switch_form_export)
-        self.add(nps.ButtonPress, name='[Up-/Download Templates]', relx=3,
-                 when_pressed_function=self._switch_form_template_sync)
-        self.add(nps.ButtonPress, name='[Remove Templates]', relx=3,
-                 when_pressed_function=self._switch_form_template_del)
-        self.add(nps.ButtonPress, name='[Change Screens]', relx=3,
-                 when_pressed_function=self._switch_form_screens)
+
+        self.add(
+            nps.Textfield, value='Utilities', editable=False, color='STANDOUT')
+        self.add(
+            nps.ButtonPress, name='[Export Notebooks]', relx=3,
+            when_pressed_function=self._switch_form_export)
+        self.add(
+            nps.ButtonPress, name='[Up-/Download Templates]', relx=3,
+            when_pressed_function=self._switch_form_template_sync)
+        self.add(
+            nps.ButtonPress, name='[Remove Templates]', relx=3,
+            when_pressed_function=self._switch_form_template_del)
+        self.add(
+            nps.ButtonPress, name='[Change Screens]', relx=3,
+            when_pressed_function=self._switch_form_screens)
         add_empty_row(self)
-        self.add(nps.Textfield, value='Tablet Control', editable=False, color='STANDOUT')
-        self.add(nps.ButtonPress, name='[Adjust Settings]', relx=3,
-                 when_pressed_function=self._switch_form_control)
+
+        self.add(
+            nps.Textfield, value='Tablet Control',
+            editable=False, color='STANDOUT')
+        self.add(
+            nps.ButtonPress, name='[Adjust Settings]', relx=3,
+            when_pressed_function=self._switch_form_control)
         add_empty_row(self)
-        self.add(nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
-                 when_pressed_function=self._restart_tablet_ui)
-        self.add(nps.ButtonPress, name='[Reboot Tablet]', relx=3,
-                 when_pressed_function=self._reboot_tablet)
+
+        self.add(
+            nps.ButtonPress, name='[Restart Tablet UI]', relx=3,
+            when_pressed_function=self._restart_tablet_ui)
+        self.add(
+            nps.ButtonPress, name='[Reboot Tablet]', relx=3,
+            when_pressed_function=self._reboot_tablet)
 
     def exit_application(self, *args, **kwargs):
         self.parentApp.setNextForm(None)
@@ -133,8 +153,9 @@ class MainForm(nps.ActionFormMinimal):
         self._connection.restart_ui()
 
     def _reboot_tablet(self, *args, **kwargs):
-        if nps.notify_yes_no('Do you really want to reboot the tablet?\nreMass will exit, too.',
-                             title='Confirm', form_color='STANDOUT', editw=1):
+        if nps.notify_yes_no(
+                'Do you really want to reboot the tablet?\nreMass will exit, too.',
+                title='Confirm', form_color='STANDOUT', editw=1):
             self._connection.reboot_tablet()
             self.exit_application()
 
@@ -153,18 +174,23 @@ class RATui(nps.NPSAppManaged):
         # Since the user may change configuration parameters within 'CONNECT',
         # the following forms should be initialized upon every invocation (to
         # inject the up-to-date parametrization)
-        self.addFormClass('MAIN', MainForm, self._cfg, self._connection,
-                          name='reMass')
-        self.addFormClass('EXPORT', ExportForm, self._cfg, self._connection,
-                          name='reMass: Export PDF')
-        self.addFormClass('TEMPLATESYNC', TemplateSynchronizationForm, self._cfg, self._connection,
-                          name='reMass: Template Up-/Download')
-        self.addFormClass('TEMPLATEDEL', TemplateRemovalForm, self._cfg, self._connection,
-                          name='reMass: Template Removal')
-        self.addFormClass('SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
-                          name='reMass: Screen Customization')
-        self.addFormClass('CONTROL', DeviceSettingsForm, self._cfg, self._connection,
-                          name='reMass: Device Settings')
+        self.addFormClass(
+            'MAIN', MainForm, self._cfg, self._connection, name='reMass')
+        self.addFormClass(
+            'EXPORT', ExportForm, self._cfg, self._connection,
+            name='reMass: Export PDF')
+        self.addFormClass(
+            'TEMPLATESYNC', TemplateSynchronizationForm, self._cfg,
+            self._connection, name='reMass: Template Up-/Download')
+        self.addFormClass(
+            'TEMPLATEDEL', TemplateRemovalForm, self._cfg, self._connection,
+            name='reMass: Template Removal')
+        self.addFormClass(
+            'SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
+            name='reMass: Screen Customization')
+        self.addFormClass(
+            'CONTROL', DeviceSettingsForm, self._cfg, self._connection,
+            name='reMass: Device Settings')
 
     def onCleanExit(self):
         self._connection.close()

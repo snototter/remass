@@ -72,7 +72,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
 
     def _backup_screen(self, *args, **kwargs):
         screen_selection = SplashScreenUtil.SCREENS[self.rm_screen.value[0]]
-        remote_file = SplashScreenUtil.tablet_filename(screen_selection)
+        remote_file = SplashScreenUtil.tablet_screen_filename(screen_selection)
         bak_file = next_backup_filename(screen_selection[0], self._cfg.screen_backup_dir)
         self._connection.download_file(remote_file, bak_file)
         nps.notify_confirm(f"'{screen_selection[1]}' screen has been sucessfully backed up to:\n"
@@ -84,7 +84,7 @@ class ScreenCustomizationForm(nps.ActionFormMinimal):
             return False
         
         screen_selection = SplashScreenUtil.SCREENS[self.rm_screen.value[0]]
-        remote_file = SplashScreenUtil.tablet_filename(screen_selection)
+        remote_file = SplashScreenUtil.tablet_screen_filename(screen_selection)
         try:
             self._connection.upload_file(self.screen_filename.filename, remote_file)
             nps.notify_confirm(f"'{screen_selection[1]}' screen has been sucessfully uploaded.\n"
