@@ -45,22 +45,25 @@ def list_files(args, search: str=None):
 
 
 def export(args):
+    def _print_progress(progress: float) -> None:
+        logging.info(f'Exported {progress:.1f} %.')
     cfg = RemassConfig(args)
     connection = TabletConnection(cfg)
     connection.open()
-    connection.render_document_by_uuid(args.export, 'dev-export-test.pdf', None,
-                                       template_alpha=0.4,
-                                       expand_pages=True,
-                                       #  only_annotated=self.rendering_only_annotated.value
-                                        # page_selection=pages,
-                                       template_path=cfg.template_backup_dir)
+    connection.render_document_by_uuid(
+        args.export, 'dev-export-test.pdf', _print_progress,
+        template_alpha=0.4, expand_pages=True,
+        #  only_annotated=self.rendering_only_annotated.value
+        # page_selection=pages,
+        template_path=cfg.template_backup_dir)
     connection.close()
 
 
 if __name__ == '__main__':
-    # Verbose logging heavily interferes with npyscreen. Thus, restrict it to
-    # warning/error levels only.
-    logging.basicConfig(level=logging.WARNING)
+    # Verbose logging heavily interferes with npyscreen. Thus, it is
+    # restricted to warning/error levels in the main program. But in
+    # dev mode, we don't use the TUI.
+    logging.basicConfig(level=logging.INFO)
     args = parse_args()
     if args.list or args.search is not None:
         list_files(args, args.search)
