@@ -2,7 +2,7 @@
 from typing import List
 import npyscreen as nps
 import curses
-from ..filesystem import RCollection, RDirEntry, RDocument, _RLink
+from remass.filesystem import RCollection, RDirEntry, RDocument, _RLink
 
 
 class RFileGrid(nps.SimpleGrid):

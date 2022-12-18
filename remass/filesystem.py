@@ -10,9 +10,7 @@ import getpass
 import json
 import datetime
 from typing import Callable, ClassVar, Dict, List, Tuple, Type
-from collections import deque
 import paramiko
-from paramiko import file
 from paramiko.util import ClosingContextManager
 import stat
 from pathlib import PurePosixPath

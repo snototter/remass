@@ -7,8 +7,9 @@ import socket
 import re
 from PIL import Image
 from getpass import getpass
-from .filesystem import RCollection, RDirEntry, RDocument, load_remote_filesystem, render_remote
-from .config import next_backup_filename
+from remass.filesystem import RCollection, RDirEntry, RDocument,\
+    load_remote_filesystem, render_remote
+from remass.config import next_backup_filename
 from pathlib import PurePosixPath
 
 

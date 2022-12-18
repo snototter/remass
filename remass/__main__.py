@@ -1,6 +1,6 @@
 import argparse
 import logging
-from .tui import RATui
+from remass.tui import RATui
 
 
 def parse_args():

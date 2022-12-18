@@ -2,9 +2,9 @@
 import npyscreen as nps
 import os
 
-from ..utilities import add_empty_row, full_class_name
-from ..widgets import TitleCustomFilenameCombo, TitleCustomPassword
-from ...config import RemassConfig
+from remass.tui.utilities import add_empty_row, full_class_name
+from remass.tui.widgets import TitleCustomFilenameCombo, TitleCustomPassword
+from remass.config import RemassConfig
 
 
 class StartUpForm(nps.ActionForm):

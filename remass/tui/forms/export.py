@@ -1,18 +1,17 @@
 """PDF Export"""
 import npyscreen as nps
 import os
-import curses
 import threading
 from pdf2image import convert_from_path
 from pdf2image.generators import counter_generator
 
-from ..utilities import add_empty_row, safe_filename, open_with_default_application
+from remass.tui.utilities import add_empty_row, safe_filename, open_with_default_application
 
-from ..widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleAlphaSlider, TitlePageRange
-from ..fileselect import TitleRFilenameCombo
-from ...tablet import TabletConnection
-from ...config import RemassConfig, abbreviate_user
-from ...filesystem import RDocument
+from remass.tui.widgets import ProgressBarBox, TitleCustomFilenameCombo, TitleAlphaSlider, TitlePageRange
+from remass.tui.fileselect import TitleRFilenameCombo
+from remass.tablet import TabletConnection
+from remass.config import RemassConfig, abbreviate_user
+from remass.filesystem import RDocument
 
 
 class ExportForm(nps.ActionFormMinimal):

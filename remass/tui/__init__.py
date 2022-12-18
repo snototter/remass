@@ -1,1 +1,1 @@
-from .tui import RATui
+from remass.tui.tui import RATui

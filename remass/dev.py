@@ -1,8 +1,8 @@
 import argparse
 import logging
-from .tui import RATui
-from .tablet import TabletConnection
-from .config import RemassConfig
+from remass.tui import RATui
+from remass.tablet import TabletConnection
+from remass.config import RemassConfig
 
 
 def parse_args():

@@ -2,11 +2,11 @@ import json
 import os
 import shutil
 import tempfile
-from functools import cmp_to_key
 from pathlib import PurePosixPath
 from typing import Dict, List
-from .config import RemassConfig, latest_backup_filename, next_backup_filename
-from .tablet import TabletConnection
+from remass.config import RemassConfig, latest_backup_filename,\
+    next_backup_filename
+from remass.tablet import TabletConnection
 
 
 RM_TEMPLATE_PATH = '/usr/share/remarkable/templates'

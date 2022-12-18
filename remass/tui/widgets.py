@@ -3,7 +3,7 @@ import npyscreen as nps
 import os
 import re
 from typing import Tuple
-from ..config import abbreviate_user
+from remass.config import abbreviate_user
 
 
 class CustomPasswordEntry(nps.Textfield):

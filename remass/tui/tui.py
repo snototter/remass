@@ -2,11 +2,12 @@ import npyscreen as nps
 import paramiko
 import socket
 
-from .utilities import add_empty_row, full_class_name
+from remass.tui.utilities import add_empty_row, full_class_name
 
-from ..tablet import TabletConnection
-from ..config import RemassConfig
-from .forms import StartUpForm, ExportForm, ScreenCustomizationForm,\
+from remass import __version__ as remass_version
+from remass.tablet import TabletConnection
+from remass.config import RemassConfig
+from remass.tui.forms import StartUpForm, ExportForm, ScreenCustomizationForm,\
     TemplateSynchronizationForm, TemplateRemovalForm, DeviceSettingsForm
 
 
@@ -16,7 +17,9 @@ from .forms import StartUpForm, ExportForm, ScreenCustomizationForm,\
 class MainForm(nps.ActionFormMinimal):
     OK_BUTTON_TEXT = 'Exit'
 
-    def __init__(self, cfg: RemassConfig, connection: TabletConnection, *args, **kwargs):
+    def __init__(
+            self, cfg: RemassConfig, connection: TabletConnection,
+            *args, **kwargs):
         self._cfg = cfg
         self._connection = connection
         super().__init__(*args, **kwargs)
@@ -25,13 +28,15 @@ class MainForm(nps.ActionFormMinimal):
         try:
             self._connection.open()
         except (paramiko.SSHException, socket.timeout, socket.gaierror) as e:
-            nps.notify_confirm("Cannot connect to tablet - aborting now.\n"
-                               "----------------------------------------\n"
-                               f"Exception ({full_class_name(e)}):\n{e}",
-                               title='Error', form_color='CAUTION', editw=1)
+            nps.notify_confirm(
+                "Cannot connect to tablet - aborting now.\n"
+                "----------------------------------------\n"
+                f"Exception ({full_class_name(e)}):\n{e}",
+                title='Error', form_color='CAUTION', editw=1)
             # self.exit_application() will be ignored when invoked from this
             # exception handler, thus we have to quit the ugly way:
-            raise RuntimeError(f'Aborting due to connection error: {e}') from None
+            raise RuntimeError(
+                f'Aborting due to connection error: {e}') from None
         self.update_device_info()
 
     def on_ok(self):
@@ -170,27 +175,32 @@ class RATui(nps.NPSAppManaged):
         super().__init__()
 
     def onStart(self):
-        self.addForm('CONNECT', StartUpForm, self._cfg, name='Connection Options')
+        vers_str = f'reMass v{remass_version}'
+        self.addForm(
+            'CONNECT', StartUpForm, self._cfg,
+            name=f'Connection Options - {vers_str}')
         # Since the user may change configuration parameters within 'CONNECT',
         # the following forms should be initialized upon every invocation (to
         # inject the up-to-date parametrization)
         self.addFormClass(
-            'MAIN', MainForm, self._cfg, self._connection, name='reMass')
+            'MAIN', MainForm, self._cfg, self._connection,
+            name=vers_str)
         self.addFormClass(
             'EXPORT', ExportForm, self._cfg, self._connection,
-            name='reMass: Export PDF')
+            name=f'Export Notebooks - {vers_str}')
         self.addFormClass(
             'TEMPLATESYNC', TemplateSynchronizationForm, self._cfg,
-            self._connection, name='reMass: Template Up-/Download')
+            self._connection,
+            name=f'Template Up-/Download - {vers_str}')
         self.addFormClass(
             'TEMPLATEDEL', TemplateRemovalForm, self._cfg, self._connection,
-            name='reMass: Template Removal')
+            name=f'Template Removal - {vers_str}')
         self.addFormClass(
             'SCREENS', ScreenCustomizationForm, self._cfg, self._connection,
-            name='reMass: Screen Customization')
+            name=f'Screen Customization - {vers_str}')
         self.addFormClass(
             'CONTROL', DeviceSettingsForm, self._cfg, self._connection,
-            name='reMass: Device Settings')
+            name=f'Device Settings - {vers_str}')
 
     def onCleanExit(self):
         self._connection.close()

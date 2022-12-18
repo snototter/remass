@@ -2,10 +2,10 @@
 import npyscreen as nps
 import os
 
-from ..utilities import add_empty_row, open_with_default_application
-from ..widgets import TitleCustomFilenameCombo
-from ...tablet import TabletConnection, SplashScreenUtil, NotEnoughDiskSpaceError
-from ...config import RemassConfig, abbreviate_user, next_backup_filename
+from remass.tui.utilities import add_empty_row, open_with_default_application
+from remass.tui.widgets import TitleCustomFilenameCombo
+from remass.tablet import TabletConnection, SplashScreenUtil, NotEnoughDiskSpaceError
+from remass.config import RemassConfig, abbreviate_user, next_backup_filename
 
 
 class ScreenCustomizationForm(nps.ActionFormMinimal):

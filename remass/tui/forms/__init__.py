@@ -1,5 +1,5 @@
-from .connection import StartUpForm
-from .export import ExportForm
-from .screens import ScreenCustomizationForm
-from .templates import TemplateSynchronizationForm, TemplateRemovalForm
-from .device import DeviceSettingsForm
+from remass.tui.forms.connection import StartUpForm
+from remass.tui.forms.export import ExportForm
+from remass.tui.forms.screens import ScreenCustomizationForm
+from remass.tui.forms.templates import TemplateSynchronizationForm, TemplateRemovalForm
+from remass.tui.forms.device import DeviceSettingsForm

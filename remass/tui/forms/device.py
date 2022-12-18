@@ -3,9 +3,9 @@ import datetime
 import npyscreen as nps
 from typing import Tuple
 
-from ..utilities import add_empty_row
-from ...tablet import TabletConnection
-from ...config import RemassConfig
+from remass.tui.utilities import add_empty_row
+from remass.tablet import TabletConnection
+from remass.config import RemassConfig
 
 
 def tz_dst2std(tzstr: str) -> str:

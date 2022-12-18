@@ -1,11 +1,10 @@
 """Screen Customization"""
 import npyscreen as nps
-import os
 
-from ..utilities import add_empty_row
-from ...tablet import TabletConnection
-from ...config import RemassConfig, abbreviate_user
-from ...templates import TemplateOrganizer, template_name
+from remass.tui.utilities import add_empty_row
+from remass.tablet import TabletConnection
+from remass.config import RemassConfig, abbreviate_user
+from remass.templates import TemplateOrganizer, template_name
 
 
 class TemplateSynchronizationForm(nps.ActionFormMinimal):
