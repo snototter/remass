@@ -92,14 +92,14 @@ def _parse_number(token: str) -> int:
 
 def _parse_range_token(token: str) -> Tuple[int, int]:
     """Parses an input range token:
-    '*': (1, -1), i.e. representing the whole range
+    '*' or '-' or empty string: (1, -1), i.e. representing the whole range
     X-Y: (X, Y)
     -Y:  (-Y, -Y)
     X-:  (X, -1)
     """
     try:
         token = token.strip()
-        if token == '*' or token == '-':
+        if (len(token) == 0) or (token == '*') or (token == '-'):
             return (1, -1)
         elif '-' in token:
             match = re.match(r"([-+]?\d+)?-([-+]?\d+)?", token)
@@ -126,6 +126,7 @@ class PageRange(nps.Textfield):
     User inputs are exptected to be 1-based; start and end are inclusive.
     Its .page attribute parses the input into a list of tuple[start, end]
     Special:
+    '' denotes 'all', parsed as:        (1, -1)
     '*' denotes 'all', parsed as:       (1, -1)
     '-X' denotes '1 to X', parsed as:   (1,  X)
     'X-' denotes 'X to end', parsed as: (X, -1) 
@@ -143,8 +144,6 @@ class PageRange(nps.Textfield):
         if self.value is None:
             return None
         self.value = self.value.strip()
-        if len(self.value) == 0:
-            return None
         tokens = self.value.replace(';', ',').split(',')
         ranges = [_parse_range_token(token) for token in tokens]
         return [r for r in ranges if r is not None]
