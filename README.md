@@ -1,3 +1,5 @@
+**This text-based UI was developed for rM software version 2.X -- it hasn't been tested or adapted to rM software 3.X!**
+
 # reMass
 TUI (text-based UI) for Unix-like systems which simplifies customizing reMarkable&reg; e-ink tablets (screens &amp; templates) and provides basic PDF &amp; PNG export functionality.  
 
